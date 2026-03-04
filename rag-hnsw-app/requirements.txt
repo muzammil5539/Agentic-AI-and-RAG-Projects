@@ -1,0 +1,23 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-dotenv>=1.0.0
+pydantic-settings>=2.0.0
+python-multipart>=0.0.9
+
+# LangChain ecosystem
+langchain>=0.3.0
+langchain-classic>=0.0.1
+langchain-text-splitters>=0.3.0
+langchain-openai>=0.2.0
+langchain-chroma>=0.2.0
+langchain-community>=0.3.0
+
+# ChromaDB
+chromadb>=0.5.0
+
+# BM25
+rank-bm25>=0.2.2
+
+# Document loaders
+pypdf>=4.0.0
+docx2txt>=0.8
