@@ -11,67 +11,151 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar -->
+
+        <!-- ===== Sidebar ===== -->
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <polyline points="10 9 9 9 8 9"/>
+
+            <!-- ── Chat Sessions Panel ── -->
+            <div class="sidebar-panel panel-chats">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        Chats
+                    </span>
+                    <button class="btn-new-chat" id="newChatBtn" onclick="createNewChat()" title="New Chat">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        New Chat
+                    </button>
+                </div>
+                <div class="session-list" id="sessionList">
+                    <div class="empty-state">
+                        <p>No chats yet</p>
+                        <p class="hint">Click "New Chat" to begin</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Divider ── -->
+            <div class="sidebar-divider"></div>
+
+            <!-- ── Documents Panel ── -->
+            <div class="sidebar-panel panel-docs">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        Documents
+                    </span>
+                    <span class="badge" id="totalChunks">0 chunks</span>
+                </div>
+
+                <!-- Upload Zone -->
+                <div class="upload-zone" id="dropZone">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
-                    <h2>Documents</h2>
+                    <p class="upload-title">Drag & drop files here</p>
+                    <p class="upload-subtitle">PDF, TXT, DOCX, CSV, MD</p>
+                    <input type="file" id="fileInput" accept=".pdf,.txt,.docx,.csv,.md" hidden multiple>
+                    <button class="btn btn-upload" onclick="document.getElementById('fileInput').click()">
+                        Browse Files
+                    </button>
+                </div>
+
+                <div class="upload-progress" id="uploadProgress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <span class="upload-status" id="uploadStatus"></span>
+                </div>
+
+                <!-- Cross-chat legend -->
+                <div class="cross-chat-legend">
+                    <span class="legend-icon shared-icon">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </span>
+                    <span>= shared across all chats</span>
+                </div>
+
+                <!-- Document list -->
+                <div class="doc-list" id="docList">
+                    <div class="empty-state" id="emptyState">
+                        <p>No documents yet</p>
+                        <p class="hint">Upload files to get started</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="upload-zone" id="dropZone">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="17 8 12 3 7 8"/>
-                    <line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                <p class="upload-title">Drag & drop files here</p>
-                <p class="upload-subtitle">PDF, TXT, DOCX, CSV</p>
-                <input type="file" id="fileInput" accept=".pdf,.txt,.docx,.csv" hidden multiple>
-                <button class="btn btn-upload" onclick="document.getElementById('fileInput').click()">
-                    Browse Files
-                </button>
-            </div>
+            <!-- ── Divider ── -->
+            <div class="sidebar-divider"></div>
 
-            <div class="upload-progress" id="uploadProgress">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
+            <!-- ── Cross-Chat / Inter-Chat Memory Panel ── -->
+            <div class="sidebar-panel panel-memory">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                        </svg>
+                        Inter-Chat Memory
+                    </span>
+                    <span class="badge badge-memory" id="memoryCount">0</span>
                 </div>
-                <span class="upload-status" id="uploadStatus"></span>
-            </div>
-
-            <div class="doc-list-header">
-                <span>Ingested Files</span>
-                <span class="badge" id="totalChunks">0 chunks</span>
-            </div>
-            <div class="doc-list" id="docList">
-                <div class="empty-state" id="emptyState">
-                    <p>No documents yet</p>
-                    <p class="hint">Upload files to get started</p>
+                <p class="memory-hint">Archives of past conversations are searched automatically on every query to provide cross-session context.</p>
+                <div class="memory-list" id="memoryList">
+                    <div class="empty-state">
+                        <p>No memories yet</p>
+                        <p class="hint">Delete or archive a chat to save it here</p>
+                    </div>
                 </div>
             </div>
+
         </aside>
 
-        <!-- Main Content -->
+        <!-- ===== Main Content ===== -->
         <main class="main-content">
             <header class="app-header">
-                <div>
-                    <h1>RAG Document Assistant</h1>
-                    <p class="subtitle">AI-powered hybrid search with HNSW vector indexing</p>
+                <div class="header-left">
+                    <h1 id="chatTitle">RAG Document Assistant</h1>
+                    <p class="subtitle">AI-powered hybrid search · HNSW + BM25 + Hybrid Retrieval</p>
                 </div>
-                <div class="header-badges">
-                    <span class="tech-badge">HNSW</span>
-                    <span class="tech-badge">BM25</span>
-                    <span class="tech-badge">Hybrid</span>
+                <div class="header-right">
+                    <div class="header-badges">
+                        <span class="tech-badge">HNSW</span>
+                        <span class="tech-badge">BM25</span>
+                        <span class="tech-badge">Hybrid</span>
+                    </div>
+                    <div class="header-mem-badges">
+                        <span class="mem-badge chat-mem-badge" title="Per-session multi-turn memory">
+                            In-Chat Memory
+                        </span>
+                        <span class="mem-badge cross-mem-badge" id="crossMemBadge"
+                              title="Cross-chat document sharing">
+                            Cross-Chat: <span id="sharedDocCount">0</span> docs
+                        </span>
+                        <span class="mem-badge inter-mem-badge" id="interMemBadge"
+                              title="Archived past conversation summaries available for retrieval">
+                            Inter-Chat Memory: <span id="memoryBadgeCount">0</span>
+                        </span>
+                    </div>
                 </div>
             </header>
 
@@ -85,8 +169,7 @@
                         </svg>
                     </div>
                     <h3>Welcome to RAG Document Assistant</h3>
-                    <p>Upload your documents in the sidebar, then ask questions about them.
-                       Answers are grounded in your documents with source references.</p>
+                    <p>Upload documents, then ask questions — every answer is grounded in your files.</p>
                     <div class="feature-grid">
                         <div class="feature-card">
                             <strong>Semantic Search</strong>
@@ -97,12 +180,12 @@
                             <p>BM25 term-frequency matching</p>
                         </div>
                         <div class="feature-card">
-                            <strong>Hybrid Retrieval</strong>
-                            <p>Reciprocal Rank Fusion of both methods</p>
+                            <strong>Chat Memory</strong>
+                            <p>Each chat keeps its own conversation history</p>
                         </div>
                         <div class="feature-card">
-                            <strong>Source Citations</strong>
-                            <p>Every answer includes inline references</p>
+                            <strong>Cross-Chat Docs</strong>
+                            <p>Pin documents to share as global knowledge</p>
                         </div>
                     </div>
                 </div>
@@ -110,9 +193,8 @@
 
             <div class="query-bar">
                 <div class="input-wrapper">
-                    <input type="text" id="queryInput"
-                           placeholder="Ask a question about your documents..."
-                           autocomplete="off">
+                    <textarea id="queryInput" rows="1"
+                              placeholder="Ask a question about your documents…"></textarea>
                     <button class="btn btn-send" id="sendBtn" onclick="sendQuery()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -121,6 +203,7 @@
                         </svg>
                     </button>
                 </div>
+                <div class="query-hint">Press <kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for new line</div>
             </div>
         </main>
     </div>

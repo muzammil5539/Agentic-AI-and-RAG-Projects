@@ -7,10 +7,11 @@ from langchain_community.document_loaders import (
 )
 
 LOADER_MAP = {
-    ".pdf": PyPDFLoader,
-    ".txt": TextLoader,
+    ".pdf":  PyPDFLoader,
+    ".txt":  TextLoader,
+    ".md":   TextLoader,   # Markdown is plain text — no extra deps required
     ".docx": Docx2txtLoader,
-    ".csv": CSVLoader,
+    ".csv":  CSVLoader,
 }
 
 
