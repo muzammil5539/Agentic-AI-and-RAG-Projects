@@ -7,6 +7,7 @@ A production-ready **Retrieval-Augmented Generation (RAG)** application built wi
 ## Table of Contents
 
 - [Overview](#overview)
+- [Screenshots](#screenshots)
 - [Key Features](#key-features)
 - [Architecture](#architecture)
   - [High-Level Diagram](#high-level-diagram)
@@ -34,6 +35,63 @@ A production-ready **Retrieval-Augmented Generation (RAG)** application built wi
 ## Overview
 
 This application lets you upload documents, ask questions about them in a conversational interface, and receive grounded, cited answers powered by GPT-4o-mini. It maintains full conversation history within a session and automatically summarises and stores completed conversations so the AI can reference past discussions in future sessions.
+
+---
+
+## Screenshots
+
+### 1 — Application UI Overview
+
+![Application UI Overview](images/1-%20Page%20UI.png)
+
+The screenshot above shows the complete single-page interface on first load. The numbered red boxes highlight each functional region:
+
+| Box | Region | Description |
+|---|---|---|
+| **1** | **CHATS panel** (top-left) | Lists all chat sessions sorted newest-first. The **+ New Chat** button creates a new isolated session. Each session is auto-titled from the first user message and can be renamed, archived, or deleted via its context menu. |
+| **2** | **Document upload area** | Drag-and-drop zone (or click **Browse Files**) for ingesting documents. Accepts PDF, TXT, DOCX, CSV, and Markdown files. On drop/select the file is sent to `POST /api/upload`, chunked, embedded, and stored in ChromaDB. |
+| **3** | **Document list** | Displays every ingested document with its chunk count. Each entry has a **share toggle** (checkmark) to mark the document as *globally shared*, making it available as background context in every session regardless of which documents were uploaded per-chat. |
+| **4** | **Inter-Chat Memory panel** (bottom-left) | Shows archived conversation summaries. Every time a session is deleted or archived, the full transcript is summarised by the LLM, embedded, and stored here. These summaries are automatically retrieved and injected into the system prompt on every new query to provide continuity across conversations. |
+| **5** | **Chat input bar** | The main question input. Press **Enter** to send, **Shift + Enter** for a newline. The message is routed through the hybrid retriever (HNSW + BM25), cross-chat memory search, and the LLM chain before the grounded, cited answer is streamed back into the chat window. |
+
+---
+
+### 2 — RAG in Action (Part A): Uploading a Document & Asking a Question
+
+![RAG in Action – Part A](images/2-%20RAG%20in%20action%20a.png)
+
+This screenshot captures the first stage of a live RAG interaction:
+
+- A document has been uploaded and ingested — the **Document list** (Box 3 area) shows the file name and its chunk count.
+- The user has typed a question in the chat input and submitted it.
+- The **CHATS panel** now shows the active session, auto-titled from the first user message.
+- The hybrid retriever begins searching both the HNSW vector index and the BM25 keyword index in parallel to locate the most relevant chunks.
+
+---
+
+### 2 — RAG in Action (Part B): Grounded Answer with Source Citations
+
+![RAG in Action – Part B](images/2-%20RAG%20in%20action%20b.png)
+
+This screenshot shows the assistant's response after the retrieval and generation pipeline has completed:
+
+- The **chat window** displays the LLM-generated answer, grounded exclusively in the uploaded document.
+- Inline `[Source: filename, Chunk: N]` citations are embedded directly in the answer text so every factual claim is traceable.
+- A **References** section at the end of the response lists all source chunks used, including the filename, page number (where available), and a short snippet.
+- The **In-Chat Memory** and **Cross-Chat Memory** badges in the top-right header update to reflect the current session's memory state.
+
+---
+
+### 2 — RAG in Action (Part C): Multi-Turn Conversation & Memory
+
+![RAG in Action – Part C](images/2-%20RAG%20in%20action%20c.png)
+
+This screenshot demonstrates the multi-turn and cross-session memory capabilities:
+
+- The chat history shows multiple back-and-forth turns; the **In-Chat Memory** retains the last 20 user/assistant pairs (40 messages) and injects them into every prompt so the assistant maintains full conversational context.
+- If a previous session was archived, the **Inter-Chat Memory panel** shows the stored summary and the **Cross-Chat Memory** badge in the header reflects the count of archived memories.
+- The assistant's follow-up answers reference earlier turns naturally, demonstrating that the session memory is correctly threaded into the LLM context.
+- Source citations continue to appear in every response, ensuring answers remain grounded even across multi-turn exchanges.
 
 ---
 
