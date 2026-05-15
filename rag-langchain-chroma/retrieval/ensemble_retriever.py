@@ -1,7 +1,7 @@
 from langchain_classic.retrievers import EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
-from vectorstore.chroma_store import get_vectorstore, get_retriever
+from vector_store.chromadb_store import get_vectorstore, get_retriever
 from config import settings
 
 _bm25_retriever = None

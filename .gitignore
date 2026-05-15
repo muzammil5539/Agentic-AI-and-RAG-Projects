@@ -3,3 +3,7 @@ __pychace__
 .env*
 *.pyc
 data/
+
+# Logs
+logs/
+*.log

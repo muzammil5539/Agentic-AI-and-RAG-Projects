@@ -1,4 +1,4 @@
-import os
+﻿import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
 
-from api.routes import router
+from api.api_routes import router
 from config import settings
 
 
@@ -16,14 +16,14 @@ async def lifespan(app: FastAPI):
     if not settings.OPENAI_API_KEY:
         raise RuntimeError(
             "OPENAI_API_KEY is not set. "
-            "Add it to rag-hnsw-app/.env or set it as an environment variable."
+            "Add it to rag-langchain-chroma/.env or set it as an environment variable."
         )
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     os.makedirs(settings.CHROMA_PERSIST_DIR, exist_ok=True)
     yield
 
 
-app = FastAPI(title="RAG HNSW App", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="RAG LangChain Chroma", version="1.0.0", lifespan=lifespan)
 
 app.include_router(router)
 

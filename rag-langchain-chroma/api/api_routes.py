@@ -3,7 +3,7 @@ import shutil
 from collections import Counter
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from api.models import (
+from api.request_models import (
     QueryRequest,
     QueryResponse,
     UploadResponse,
@@ -16,14 +16,14 @@ from api.models import (
     ChatMemoryEntry,
     ChatMemoryListResponse,
 )
-from ingestion.loader import load_document
-from ingestion.chunker import chunk_documents
-from vectorstore.chroma_store import add_documents, get_vectorstore
-from retrieval.hybrid_retriever import get_ensemble_retriever, refresh_bm25
-from generation.chain import generate_answer
-from memory.session_store import session_store
-from memory.cross_chat_store import cross_chat_store
-from memory.chat_memory_store import chat_memory_store
+from indexing.document_loader import load_document
+from indexing.text_splitter import chunk_documents
+from vector_store.chromadb_store import add_documents, get_vectorstore
+from retrieval.ensemble_retriever import get_ensemble_retriever, refresh_bm25
+from generation.langchain_rag_chain import generate_answer
+from memory.session_history_store import session_store
+from memory.shared_documents_store import cross_chat_store
+from memory.cross_session_memory import chat_memory_store
 from config import settings
 
 router = APIRouter(prefix="/api")
@@ -344,3 +344,4 @@ def _session_to_model(session: dict) -> ChatSession:
         updated_at=session.get("updated_at", session.get("created_at", "")),
         message_count=len(session.get("messages", [])),
     )
+

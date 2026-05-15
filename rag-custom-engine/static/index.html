@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RAG From Scratch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- ═══════════ LEFT SIDEBAR ═══════════ -->
+        <aside class="sidebar">
+            <!-- Chats Panel -->
+            <div class="sidebar-panel">
+                <div class="panel-header">
+                    <h3><span class="material-icons-round">forum</span> Chats</h3>
+                    <button class="btn-icon" onclick="createNewChat()" title="New Chat">
+                        <span class="material-icons-round" style="font-size:20px">add</span>
+                    </button>
+                </div>
+                <div class="session-list" id="sessionList"></div>
+            </div>
+
+            <!-- Documents Panel -->
+            <div class="sidebar-panel">
+                <div class="panel-header"><h3><span class="material-icons-round">description</span> Documents</h3></div>
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">
+                        <span class="material-icons-round" style="font-size:32px;color:var(--sidebar-accent)">upload_file</span>
+                    </div>
+                    <p>Drop files here or <label class="upload-link">browse<input type="file" id="fileInput" accept=".pdf,.txt,.docx,.csv,.md" hidden /></label></p>
+                    <span class="upload-hint">PDF, TXT, DOCX, CSV, MD</span>
+                </div>
+                <div class="upload-progress" id="uploadProgress">
+                    <div class="progress-text" id="progressText">Uploading...</div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                </div>
+                <div class="doc-list" id="docList"></div>
+            </div>
+
+            <!-- Cross-Chat Legend -->
+            <div class="sidebar-panel sidebar-legend">
+                <span class="material-icons-round" style="font-size:14px">share</span>
+                <span>Toggle = share doc across all chats</span>
+            </div>
+
+            <!-- Inter-Chat Memory -->
+            <div class="sidebar-panel">
+                <div class="panel-header"><h3><span class="material-icons-round">psychology</span> Memory</h3></div>
+                <div class="memory-list" id="memoryList"></div>
+            </div>
+        </aside>
+
+        <!-- ═══════════ MAIN CONTENT ═══════════ -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-left">
+                    <h1>RAG From Scratch</h1>
+                    <div class="tech-badges">
+                        <span class="badge badge-vector" id="badgeVector">Brute Force</span>
+                        <span class="badge badge-bm25">BM25</span>
+                        <span class="badge badge-hybrid" id="badgeMerge">Weighted</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="memory-badges">
+                        <span class="mem-badge" title="In-Chat Memory"><span class="material-icons-round" style="font-size:13px">chat</span> <span id="inChatCount">0</span></span>
+                        <span class="mem-badge" title="Shared Documents"><span class="material-icons-round" style="font-size:13px">share</span> <span id="sharedDocCount">0</span></span>
+                        <span class="mem-badge" title="Inter-Chat Memories"><span class="material-icons-round" style="font-size:13px">psychology</span> <span id="interChatCount">0</span></span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Pipeline Visualization -->
+            <div class="pipeline-container" id="pipelineContainer">
+                <div class="pipeline-header">
+                    <div class="pipeline-header-left">
+                        <div class="pipeline-tabs">
+                            <button class="pipeline-tab active" id="tabTrace" onclick="switchPipelineTab('trace')"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">bolt</span> Pipeline Trace</button>
+                            <button class="pipeline-tab" id="tabArch" onclick="switchPipelineTab('arch')"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">account_tree</span> System Architecture</button>
+                        </div>
+                        <span class="pipeline-status-text" id="pipelineStatusText"></span>
+                    </div>
+                    <button class="btn-text" onclick="togglePipeline()">
+                        <span id="pipelineToggleText">Hide</span>
+                    </button>
+                </div>
+                <div class="pipeline-body" id="pipelineBody">
+
+                    <!-- ── Tab: Pipeline Trace ─────────────────────── -->
+                    <div id="pipelineTracePanel">
+                        <div class="pipeline-bar" id="pipelineBar">
+                            <div class="pipeline-bar-empty">Ask a question to see the pipeline in action</div>
+                        </div>
+                        <div class="pipeline-timeline" id="pipelineTimeline" style="display:none"></div>
+                        <div class="pipeline-timeline-toggle" id="pipelineTimelineToggle" style="display:none">
+                            <button class="btn-text" onclick="toggleTimeline()">
+                                <span id="timelineToggleText">▼ Show Step Details</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ── Tab: System Architecture ───────────────── -->
+                    <div id="pipelineArchPanel" style="display:none">
+                        <div class="arch-diagram">
+
+                            <!-- ═══ PHASE 1: INGESTION ═════════════════════════ -->
+                            <div class="arch-row phase-ingestion">
+                                <div class="arch-phase-label">
+                                    <span class="arch-phase-icon">📥</span>
+                                    <span class="arch-phase-title">Ingestion</span>
+                                </div>
+                                <div class="arch-lane">
+                                    <div class="arch-node" title="User uploads a file (PDF, TXT, DOCX, CSV, MD) via drag-drop or browse. Stored to data/uploads/. File extension validated.">
+                                        <span class="arch-node-icon">📄</span>
+                                        <span class="arch-node-name">File Upload</span>
+                                        <span class="arch-node-sub">PDF·TXT·DOCX·CSV·MD</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node" title="pypdf for PDF (page-by-page), python-docx for DOCX, csv module for CSV (rows → 'key: value' strings), plain text for TXT/MD.">
+                                        <span class="arch-node-icon">📖</span>
+                                        <span class="arch-node-name">Doc Loader</span>
+                                        <span class="arch-node-sub">text extraction</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node" title="Hierarchical separator strategy: tries [\n\n, \n, '. ', ' ', ''] in order. chunk_size=1000, overlap=200. Returns chunks with {content, metadata:{page, source_filename, chunk_index}}.">
+                                        <span class="arch-node-icon">✂️</span>
+                                        <span class="arch-node-name">Chunker</span>
+                                        <span class="arch-node-sub">1000 / 200 chars</span>
+                                    </div>
+                                    <div class="arch-fork-group">
+                                        <div class="arch-fork-arm">
+                                            <div class="arch-node node-col-blue" title="OpenAI text-embedding-3-small via API. Batches of 100. Exponential backoff retry (5 attempts: 1s,2s,4s,8s,16s). Produces 1536-dim float vectors.">
+                                                <span class="arch-node-icon">🔢</span>
+                                                <span class="arch-node-name">Embedder</span>
+                                                <span class="arch-node-sub">1536-dim vectors</span>
+                                            </div>
+                                            <div class="arch-arr"></div>
+                                            <div class="arch-node node-col-blue" title="Every chunk stored in BOTH BruteForceStore (O(n) exact cosine sim) and HNSWStore (M=16, ef_construction=200, geometric layer distribution). Namespace prefix: doc_. IDs auto-generated as UUID.">
+                                                <span class="arch-node-icon">🧮</span>
+                                                <span class="arch-node-name">Vector Store</span>
+                                                <span class="arch-node-sub">HNSW + BruteForce</span>
+                                            </div>
+                                        </div>
+                                        <div class="arch-fork-arm">
+                                            <div class="arch-node node-col-amber" title="Custom Okapi BM25 from scratch. k1=1.5, b=0.75. Tokenizer: lowercase + regex [a-z0-9]+ + stopword removal. Rebuilds inverted index + avgdl + IDF on every add.">
+                                                <span class="arch-node-icon">📊</span>
+                                                <span class="arch-node-name">BM25 Index</span>
+                                                <span class="arch-node-sub">k1=1.5, b=0.75</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node" title="Atomic JSON writes via .tmp → Path.replace() to prevent corruption. vector_store.json: {method, entries[], hnsw_config}. bm25_index.json: {k1, b, docs:[{id, content, metadata}]}.">
+                                        <span class="arch-node-icon">💾</span>
+                                        <span class="arch-node-name">Disk Storage</span>
+                                        <span class="arch-node-sub">atomic JSON writes</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Connector ↓ -->
+                            <div class="arch-connector">
+                                <span class="arch-conn-pill blue-pill">🧮 Vector Store → Vec Search at query time</span>
+                                <span class="arch-conn-pill amber-pill">📊 BM25 Index → BM25 Search at query time</span>
+                            </div>
+
+                            <!-- ═══ PHASE 2: RETRIEVAL ════════════════════════ -->
+                            <div class="arch-row phase-retrieval">
+                                <div class="arch-phase-label">
+                                    <span class="arch-phase-icon">🔍</span>
+                                    <span class="arch-phase-title">Retrieval</span>
+                                </div>
+                                <div class="arch-lane">
+                                    <div class="arch-node" title="User's natural language question from the chat input. Chat history (last 20 turns / 40 messages) loaded from Session Store for multi-turn awareness.">
+                                        <span class="arch-node-icon">💬</span>
+                                        <span class="arch-node-name">User Query</span>
+                                        <span class="arch-node-sub">+ chat history</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node node-optional" title="[Optional — enable Self-RAG] GPT-4o-mini (temp=0) decides: does this query need document retrieval? Factual/technical → RETRIEVE. Greetings/math/general → SKIP (steps 3–9 all skipped, pipeline runs with zero retrieved docs).">
+                                        <span class="arch-node-icon">🧠</span>
+                                        <span class="arch-node-name">Self-RAG Gate</span>
+                                        <span class="arch-node-sub">RETRIEVE or SKIP</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node node-optional" title="[Optional — enable Multi-Query] GPT generates 3 alternative phrasings of the original question. All 4 queries (original + 3 variants) are searched independently via hybrid_search, then all result lists are merged via RRF.">
+                                        <span class="arch-node-icon">🔍</span>
+                                        <span class="arch-node-name">Multi-Query</span>
+                                        <span class="arch-node-sub">×3 rephrasings</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node node-col-blue" title="Same text-embedding-3-small model used at ingestion time. Converts the query into a 1536-dim vector in the same geometric space as the stored document chunk vectors.">
+                                        <span class="arch-node-icon">🔢</span>
+                                        <span class="arch-node-name">Embed Query</span>
+                                        <span class="arch-node-sub">1536-dim</span>
+                                    </div>
+                                    <div class="arch-fork-group">
+                                        <div class="arch-fork-arm">
+                                            <div class="arch-node node-col-blue" title="Searches doc_ namespace. BruteForce: computes cosine similarity against every stored vector — exact, O(n). HNSW: greedy beam search through graph layers — approximate, O(log n). Returns top-K=5.">
+                                                <span class="arch-node-icon">🧮</span>
+                                                <span class="arch-node-name">Vector Search</span>
+                                                <span class="arch-node-sub">semantic / cosine</span>
+                                            </div>
+                                        </div>
+                                        <div class="arch-fork-arm">
+                                            <div class="arch-node node-col-amber" title="Tokenizes query → uses inverted index to find candidate documents containing query terms → ranks via full BM25 formula: score(d,q) = Σ IDF(t) × tf/(tf + k1×(1-b+b×|d|/avgdl)). Returns top-K=5.">
+                                                <span class="arch-node-icon">📊</span>
+                                                <span class="arch-node-name">BM25 Search</span>
+                                                <span class="arch-node-sub">lexical / keyword</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node" title="Weighted Ensemble: normalize both score lists to [0,1], combined = vec_weight×vec_score + bm25_weight×bm25_score (default 50/50). RRF: score(d) = Σ 1/(60+rank_i) across all result lists.">
+                                        <span class="arch-node-icon">🔀</span>
+                                        <span class="arch-node-name">Hybrid Merge</span>
+                                        <span class="arch-node-sub">Weighted / RRF</span>
+                                    </div>
+                                    <div class="arch-fork-group">
+                                        <div class="arch-fork-arm">
+                                            <div class="arch-node node-optional" title="[Optional — enable Self-RAG] GPT grades each retrieved chunk as relevant/irrelevant to the specific question (not just the topic). Sends first 300 chars of each chunk. Irrelevant ones discarded.">
+                                                <span class="arch-node-icon">✅</span>
+                                                <span class="arch-node-name">Relevance Grade</span>
+                                                <span class="arch-node-sub">filter noise</span>
+                                            </div>
+                                        </div>
+                                        <div class="arch-fork-arm">
+                                            <div class="arch-node node-optional" title="[Optional — enable Compression] GPT extracts only the sentences in each chunk directly relevant to the query. Drops '[NOT RELEVANT]' chunks entirely. Reduces prompt tokens while preserving signal.">
+                                                <span class="arch-node-icon">🗜️</span>
+                                                <span class="arch-node-name">Compression</span>
+                                                <span class="arch-node-sub">extract relevant sentences</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Connector ↓ -->
+                            <div class="arch-connector">
+                                <span class="arch-conn-pill green-pill">Top-K filtered chunks → Context Assembly</span>
+                                <span class="arch-conn-pill purple-pill">Memory Store → Cross-Chat Search → Context Assembly</span>
+                            </div>
+
+                            <!-- ═══ PHASE 3: GENERATION ══════════════════════ -->
+                            <div class="arch-row phase-generation">
+                                <div class="arch-phase-label">
+                                    <span class="arch-phase-icon">🤖</span>
+                                    <span class="arch-phase-title">Generation</span>
+                                </div>
+                                <div class="arch-lane">
+                                    <div class="arch-node node-col-purple" title="Query embedded → semantic search in VectorStore namespace mem_ → returns top-3 most relevant archived session summaries. Filtered by metadata.type=='chat_memory'.">
+                                        <span class="arch-node-icon">🧠</span>
+                                        <span class="arch-node-name">Cross-Chat Memory</span>
+                                        <span class="arch-node-sub">past session search</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node" title="Formats: [Document N | Source: file | Page: p | Chunk: c]\n{content} blocks for each retrieved chunk. [Past Session N | Title: t | Date: d | Messages: n] for memory. Prepends to system prompt alongside chat history.">
+                                        <span class="arch-node-icon">📋</span>
+                                        <span class="arch-node-name">Context Assembly</span>
+                                        <span class="arch-node-sub">chunks + memory + history</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node node-col-purple" title="GPT-4o-mini (temperature=0.1). 60-line system prompt enforces: Grounding Rule (only use provided context), No-Hallucination Rule, Citation Rules (cite source filename+page), Multi-Turn Awareness, Cross-Chat Memory instructions.">
+                                        <span class="arch-node-icon">🤖</span>
+                                        <span class="arch-node-name">LLM (GPT-4o-mini)</span>
+                                        <span class="arch-node-sub">temp=0.1</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node node-optional" title="[Optional — enable Self-RAG] GPT verifies: is the generated answer grounded in the retrieved context? Context limited to 3000 chars, answer to 2000 chars. Returns {grounded, confidence, reasoning}.">
+                                        <span class="arch-node-icon">🛡️</span>
+                                        <span class="arch-node-name">Halluc. Check</span>
+                                        <span class="arch-node-sub">groundedness verify</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node node-col-green" title="Final answer text + source citations (deduped by filename+chunk_index, first 200 chars as snippet) + cross-chat refs + full 14-step pipeline trace. Streamed to browser via SSE.">
+                                        <span class="arch-node-icon">✨</span>
+                                        <span class="arch-node-name">Answer + Sources</span>
+                                        <span class="arch-node-sub">streamed via SSE</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Connector ↓ -->
+                            <div class="arch-connector">
+                                <span class="arch-conn-pill">💬 Answer → saved to Session Store</span>
+                                <span class="arch-conn-pill purple-pill">On archive: Session → LLM Summary → Memory Store ↺</span>
+                            </div>
+
+                            <!-- ═══ PHASE 4: MEMORY STORAGE ══════════════════ -->
+                            <div class="arch-row phase-memory">
+                                <div class="arch-phase-label">
+                                    <span class="arch-phase-icon">🧠</span>
+                                    <span class="arch-phase-title">Memory</span>
+                                </div>
+                                <div class="arch-lane">
+                                    <div class="arch-node" title="Every user + assistant message appended to sessions.json. Auto-titles session from first user message (first 60 chars + '…'). Retains last 40 messages (20 turns). Atomic .tmp writes.">
+                                        <span class="arch-node-icon">💬</span>
+                                        <span class="arch-node-name">Session Store</span>
+                                        <span class="arch-node-sub">sessions.json</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node node-optional" title="Triggered manually (Archive button) OR automatically on session delete. Passes full conversation [{role, content}] array to LLM for summarization.">
+                                        <span class="arch-node-icon">📦</span>
+                                        <span class="arch-node-name">Archive</span>
+                                        <span class="arch-node-sub">manual or auto-on-delete</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node node-col-purple" title="GPT-4o-mini (temp=0.1) summarizes the conversation into 200-400 words covering: main topics discussed, key decisions made, important facts established, and outcomes reached.">
+                                        <span class="arch-node-icon">🤖</span>
+                                        <span class="arch-node-name">LLM Summary</span>
+                                        <span class="arch-node-sub">200–400 words</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node node-col-purple" title="Summary embedded via text-embedding-3-small → stored in VectorStore namespace mem_. Metadata: {session_id, session_title, message_count, archived_at, type:'chat_memory'}. ID: mem_cm_{session_id} (upsert pattern).">
+                                        <span class="arch-node-icon">🧠</span>
+                                        <span class="arch-node-name">Memory Store</span>
+                                        <span class="arch-node-sub">vec namespace: mem_</span>
+                                    </div>
+                                    <div class="arch-arr"></div>
+                                    <div class="arch-node node-col-purple" title="At query time: embed_query(question) → VectorStore.search(k=3, namespace=mem_) → filter by type=='chat_memory' → inject into Context Assembly. Enables the LLM to reference facts from previous sessions.">
+                                        <span class="arch-node-icon">🔎</span>
+                                        <span class="arch-node-name">Cross-Chat Search</span>
+                                        <span class="arch-node-sub">↑ feeds Generation</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Legend -->
+                            <div class="arch-legend">
+                                <span class="arch-legend-title">Legend:</span>
+                                <span class="arch-legend-item"><span class="arch-legend-dot dot-optional"></span>Optional (toggle in config bar)</span>
+                                <span class="arch-legend-item"><span class="arch-legend-dot dot-blue"></span>Semantic / Vector</span>
+                                <span class="arch-legend-item"><span class="arch-legend-dot dot-amber"></span>Lexical / BM25</span>
+                                <span class="arch-legend-item"><span class="arch-legend-dot dot-purple"></span>LLM / Memory</span>
+                                <span class="arch-legend-item"><span class="arch-legend-dot dot-green"></span>Final output</span>
+                                <span class="arch-legend-item"><span style="font-size:10px">Hover any node for details</span></span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Pipeline Config Bar -->
+            <div class="pipeline-config" id="pipelineConfig">
+                <div class="config-group">
+                    <label class="config-toggle">
+                        <input type="checkbox" id="cfgMultiQuery" onchange="saveConfig()" />
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Multi-Query</span>
+                    </label>
+                    <label class="config-toggle">
+                        <input type="checkbox" id="cfgSelfRAG" onchange="saveConfig()" />
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Self-RAG</span>
+                    </label>
+                    <label class="config-toggle">
+                        <input type="checkbox" id="cfgCompression" onchange="saveConfig()" />
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Compression</span>
+                    </label>
+                </div>
+                <div class="config-group">
+                    <div class="config-select">
+                        <label>Vector:</label>
+                        <select id="cfgVectorMethod" onchange="saveConfig()">
+                            <option value="brute_force">Brute Force</option>
+                            <option value="hnsw">HNSW</option>
+                        </select>
+                    </div>
+                    <div class="config-select">
+                        <label>Merge:</label>
+                        <select id="cfgMergeMethod" onchange="saveConfig()">
+                            <option value="weighted">Weighted</option>
+                            <option value="rrf">RRF</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-area" id="chatArea">
+                <div class="welcome-message" id="welcomeMessage">
+                    <div class="welcome-icon">🔬</div>
+                    <h2>RAG From Scratch</h2>
+                    <p>Every component built from the ground up — no LangChain, no ChromaDB.</p>
+                    <div class="feature-cards">
+                        <div class="feature-card">
+                            <div class="feature-icon">🧮</div>
+                            <h4>Vector Search</h4>
+                            <p>Brute-force cosine similarity & HNSW graph algorithm</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">📊</div>
+                            <h4>BM25</h4>
+                            <p>Okapi BM25 with inverted index & TF-IDF scoring</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🔀</div>
+                            <h4>Hybrid Retrieval</h4>
+                            <p>Weighted ensemble & Reciprocal Rank Fusion</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🤖</div>
+                            <h4>Self-RAG</h4>
+                            <p>Adaptive retrieval with relevance grading & hallucination check</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🔍</div>
+                            <h4>Multi-Query</h4>
+                            <p>LLM generates query variants for broader retrieval</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🗜️</div>
+                            <h4>Compression</h4>
+                            <p>Context compression to extract only relevant portions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div class="loading-indicator" id="loadingIndicator" style="display:none">
+                <div class="loading-dots">
+                    <span></span><span></span><span></span>
+                </div>
+                <span class="loading-text">Processing pipeline...</span>
+            </div>
+
+            <!-- Query Input -->
+            <div class="query-bar">
+                <div class="query-input-wrap">
+                    <textarea id="queryInput" placeholder="Ask a question about your documents..." rows="1"></textarea>
+                    <button class="btn-send" id="sendBtn" onclick="sendQuery()">
+                        <span class="material-icons-round" style="font-size:20px">send</span>
+                    </button>
+                </div>
+                <div class="query-hint">Press <kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for new line</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

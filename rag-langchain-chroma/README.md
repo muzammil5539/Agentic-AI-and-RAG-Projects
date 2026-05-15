@@ -1,4 +1,4 @@
-# RAG HNSW App
+# RAG LangChain Chroma
 
 A production-ready **Retrieval-Augmented Generation (RAG)** application built with FastAPI and LangChain, featuring **hybrid search** (HNSW vector search + BM25), a dual-layer **memory system**, and a clean single-page web UI.
 
@@ -42,7 +42,7 @@ This application lets you upload documents, ask questions about them in a conver
 
 ### 1 — Application UI Overview
 
-![Application UI Overview](images/1-%20Page%20UI.png)
+![Application UI Overview](screenshots/01-page-ui.png)
 
 The screenshot above shows the complete single-page interface on first load. The numbered red boxes highlight each functional region:
 
@@ -58,7 +58,7 @@ The screenshot above shows the complete single-page interface on first load. The
 
 ### 2 — RAG in Action (Part A): Uploading a Document & Asking a Question
 
-![RAG in Action – Part A](images/2-%20RAG%20in%20action%20a.png)
+![RAG in Action – Part A](screenshots/02-rag-in-action-a.png)
 
 This screenshot captures the first stage of a live RAG interaction:
 
@@ -71,7 +71,7 @@ This screenshot captures the first stage of a live RAG interaction:
 
 ### 2 — RAG in Action (Part B): Grounded Answer with Source Citations
 
-![RAG in Action – Part B](images/2-%20RAG%20in%20action%20b.png)
+![RAG in Action – Part B](screenshots/02-rag-in-action-b.png)
 
 This screenshot shows the assistant's response after the retrieval and generation pipeline has completed:
 
@@ -84,7 +84,7 @@ This screenshot shows the assistant's response after the retrieval and generatio
 
 ### 2 — RAG in Action (Part C): Multi-Turn Conversation & Memory
 
-![RAG in Action – Part C](images/2-%20RAG%20in%20action%20c.png)
+![RAG in Action – Part C](screenshots/02-rag-in-action-c.png)
 
 This screenshot demonstrates the multi-turn and cross-session memory capabilities:
 
@@ -135,7 +135,7 @@ This screenshot demonstrates the multi-turn and cross-session memory capabilitie
 │   │                    Query Pipeline                           │   │
 │   │                                                             │   │
 │   │  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐  │   │
-│   │  │  ingestion/ │  │  retrieval/  │  │   generation/    │  │   │
+│   │  │  indexing/  │  │  retrieval/  │  │   generation/    │  │   │
 │   │  │  loader.py  │  │  hybrid_ret  │  │    chain.py      │  │   │
 │   │  │  chunker.py │  │  retriever   │  │  (LLM + prompt)  │  │   │
 │   │  └──────┬──────┘  └──────┬───────┘  └────────┬─────────┘  │   │
@@ -174,8 +174,8 @@ This screenshot demonstrates the multi-turn and cross-session memory capabilitie
 | **Entry Point** | `main.py` | FastAPI app setup, lifespan hooks, static file serving |
 | **Configuration** | `config.py` | Pydantic `Settings` class; loads `.env`; exposes all tunable parameters |
 | **API Layer** | `api/routes.py`, `api/models.py` | All REST endpoints; Pydantic request/response schemas |
-| **Ingestion** | `ingestion/loader.py` | Loads raw documents using format-specific LangChain loaders |
-| **Ingestion** | `ingestion/chunker.py` | Recursive character text splitter; attaches `chunk_index` metadata |
+| **Indexing** | `indexing/document_loader.py` | Loads raw documents using format-specific LangChain loaders |
+| **Indexing** | `indexing/text_splitter.py` | Recursive character text splitter; attaches `chunk_index` metadata |
 | **Vector Store** | `vectorstore/chroma_store.py` | Singleton ChromaDB client; HNSW collection setup; document add/retrieve |
 | **Retrieval** | `retrieval/hybrid_retriever.py` | Builds BM25 retriever from ChromaDB contents; creates `EnsembleRetriever` |
 | **Generation** | `generation/chain.py` | System prompt; context + cross-chat formatting; LLM call; source extraction |
@@ -189,7 +189,7 @@ This screenshot demonstrates the multi-turn and cross-session memory capabilitie
 ## Directory Structure
 
 ```
-rag-hnsw-app/
+rag-langchain-chroma/
 ├── main.py                    # FastAPI app entry point
 ├── config.py                  # All configuration via pydantic-settings
 ├── requirements.txt           # Python dependencies
@@ -199,7 +199,7 @@ rag-hnsw-app/
 │   ├── models.py              # Pydantic request/response schemas
 │   └── routes.py              # All REST API endpoints
 │
-├── ingestion/
+├── indexing/
 │   ├── loader.py              # Document loading (PDF, DOCX, TXT, CSV, MD)
 │   └── chunker.py             # Recursive text splitter
 │
@@ -400,7 +400,7 @@ All endpoints are prefixed with `/api`.
 
 ## Configuration
 
-All configuration is managed through `config.py` using `pydantic-settings`. Create a `.env` file in the `rag-hnsw-app/` directory:
+All configuration is managed through `config.py` using `pydantic-settings`. Create a `.env` file in the `rag-langchain-chroma/` directory:
 
 ```env
 # Required
@@ -449,7 +449,7 @@ BM25_WEIGHT=0.5
 **1. Clone or download the project:**
 
 ```bash
-cd rag-hnsw-app
+cd rag-langchain-chroma
 ```
 
 **2. Create and activate a virtual environment:**
@@ -556,3 +556,4 @@ __pycache__/
 *.pyc
 .venv/
 ```
+
