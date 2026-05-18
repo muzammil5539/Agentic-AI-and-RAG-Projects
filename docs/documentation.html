@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Projects — Documentation Dashboard</title>
+  <style>
+    :root {
+      --bg:        #1e1e2e;
+      --surface:   #2a2a3e;
+      --surface2:  #313149;
+      --border:    #3d3d5c;
+      --accent:    #7c6af7;
+      --accent2:   #56b6c2;
+      --text:      #cdd6f4;
+      --muted:     #9399b2;
+      --green:     #a6e3a1;
+      --yellow:    #f9e2af;
+      --red:       #f38ba8;
+      --orange:    #fab387;
+      --blue:      #89b4fa;
+      --tab-h:     44px;
+      --sidebar-w: 220px;
+      --radius:    8px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px 0;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .logo { font-size: 20px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+    .logo span { color: var(--accent2); }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px;
+      font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .badge-purple { background: #4b3b9a; color: var(--accent); }
+    .badge-teal   { background: #1f4a50; color: var(--accent2); }
+    .badge-red    { background: #5c2233; color: var(--red); }
+    .badge-yellow { background: #5a4210; color: var(--yellow); }
+    .badge-green  { background: #1f4a2a; color: var(--green); }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 2px; overflow-x: auto; }
+    .tabs::-webkit-scrollbar { height: 3px; }
+    .tabs::-webkit-scrollbar-thumb { background: var(--border); }
+    .tab-btn {
+      background: transparent; border: none; cursor: pointer;
+      color: var(--muted); padding: 10px 18px; font-size: 13px; font-weight: 500;
+      border-bottom: 2px solid transparent; white-space: nowrap; transition: all .15s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: calc(100vh - 88px); }
+    .sidebar {
+      width: var(--sidebar-w); flex-shrink: 0; background: var(--surface);
+      border-right: 1px solid var(--border); padding: 16px 0; position: sticky;
+      top: 88px; height: calc(100vh - 88px); overflow-y: auto;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .nav-section { padding: 6px 16px 4px; color: var(--muted); font-size: 10px;
+      text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+    .nav-link {
+      display: block; padding: 6px 16px 6px 24px; color: var(--muted);
+      text-decoration: none; font-size: 13px; border-left: 2px solid transparent;
+      transition: all .12s;
+    }
+    .nav-link:hover { color: var(--text); background: var(--surface2); }
+    .nav-link.active { color: var(--accent); border-left-color: var(--accent); background: var(--surface2); }
+
+    /* ── Content ── */
+    .content { flex: 1; padding: 28px 36px; max-width: 960px; overflow-x: hidden; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Typography ── */
+    h1 { font-size: 26px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    h2 { font-size: 19px; font-weight: 600; color: var(--blue); margin: 32px 0 12px;
+         padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 15px; font-weight: 600; color: var(--accent2); margin: 20px 0 8px; }
+    h4 { font-size: 14px; font-weight: 600; color: var(--orange); margin: 16px 0 6px; }
+    p  { margin-bottom: 10px; color: var(--text); }
+    a  { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul, ol { padding-left: 20px; margin-bottom: 10px; }
+    li { margin-bottom: 4px; }
+    strong { color: var(--text); font-weight: 600; }
+    code {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 4px; padding: 1px 5px; font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+      font-size: 12px; color: var(--green);
+    }
+    pre {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px; overflow-x: auto;
+      margin: 12px 0; font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+      font-size: 12px; line-height: 1.6; color: var(--text);
+    }
+    pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; margin: 12px 0; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th {
+      background: var(--surface2); color: var(--muted); font-weight: 600;
+      padding: 8px 12px; text-align: left; border: 1px solid var(--border);
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    td { padding: 8px 12px; border: 1px solid var(--border); vertical-align: top; }
+    tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px; margin: 12px 0;
+    }
+    .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+    @media (max-width: 700px) { .card-grid { grid-template-columns: 1fr; } }
+    .card h3 { margin-top: 0; }
+
+    /* ── Callouts ── */
+    .callout {
+      border-left: 3px solid; border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 10px 14px; margin: 12px 0; font-size: 13px;
+    }
+    .callout-info    { border-color: var(--blue);   background: rgba(137,180,250,.07); }
+    .callout-warn    { border-color: var(--yellow);  background: rgba(249,226,175,.07); }
+    .callout-danger  { border-color: var(--red);     background: rgba(243,139,168,.07); }
+    .callout-success { border-color: var(--green);   background: rgba(166,227,161,.07); }
+
+    /* ── Severity badges ── */
+    .sev { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px;
+           font-weight: 700; margin-right: 6px; }
+    .sev-high   { background: rgba(243,139,168,.2); color: var(--red); }
+    .sev-medium { background: rgba(249,226,175,.2); color: var(--yellow); }
+    .sev-low    { background: rgba(166,227,161,.2); color: var(--green); }
+
+    /* ── Collapsible sections ── */
+    details { margin: 8px 0; }
+    summary {
+      cursor: pointer; padding: 8px 12px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      font-weight: 600; font-size: 13px; color: var(--text);
+      list-style: none; display: flex; align-items: center; gap: 8px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::before { content: '▶'; font-size: 10px; color: var(--muted); transition: transform .2s; }
+    details[open] summary::before { transform: rotate(90deg); }
+    details > *:not(summary) { padding: 12px 0 4px; }
+
+    /* ── SVG diagrams ── */
+    .diagram-wrap { background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin: 16px 0; overflow-x: auto; }
+    .diagram-wrap svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+
+    /* ── Step pipeline ── */
+    .pipeline {
+      display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 12px 0;
+    }
+    .step {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 12px; font-size: 12px; color: var(--text); font-weight: 500;
+      white-space: nowrap;
+    }
+    .step-arrow { color: var(--muted); font-size: 16px; }
+
+    /* ── Copy button ── */
+    .copy-btn {
+      background: var(--accent); border: none; color: #fff; padding: 8px 16px;
+      border-radius: var(--radius); cursor: pointer; font-size: 13px; font-weight: 600;
+      transition: opacity .15s; float: right;
+    }
+    .copy-btn:hover { opacity: .85; }
+    .copy-btn:active { opacity: .7; }
+
+    /* ── Comparison matrix ── */
+    .matrix td:first-child { font-weight: 600; color: var(--text); }
+    .matrix .yes { color: var(--green); font-weight: 700; }
+    .matrix .no  { color: var(--muted); }
+    .matrix .partial { color: var(--yellow); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ── Subtitle ── */
+    .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 20px; right: 20px; background: var(--green);
+      color: #1e1e2e; padding: 10px 18px; border-radius: var(--radius);
+      font-weight: 600; font-size: 13px; opacity: 0; transition: opacity .3s;
+      pointer-events: none; z-index: 9999;
+    }
+    #toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════ HEADER ════════════════════════════════ -->
+<header>
+  <div class="header-top">
+    <div class="logo">RAG<span>Projects</span></div>
+    <span class="badge badge-purple">v2 Projects</span>
+    <span class="badge badge-teal">Python · FastAPI · OpenAI</span>
+    <button class="copy-btn" onclick="copyCurrentTab()">⎘ Copy Context</button>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button class="tab-btn active" onclick="switchTab('overview',this)">Overview</button>
+    <button class="tab-btn" onclick="switchTab('langchain',this)">RAG LangChain Chroma</button>
+    <button class="tab-btn" onclick="switchTab('custom',this)">RAG Custom Engine</button>
+    <button class="tab-btn" onclick="switchTab('compare',this)">Comparison</button>
+    <button class="tab-btn" onclick="switchTab('deficiencies',this)">Deficiencies &amp; Roadmap</button>
+  </nav>
+</header>
+
+<div class="layout">
+
+  <!-- ════════════════ SIDEBAR ════════════════ -->
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <!-- ════════════════ MAIN CONTENT ════════════════ -->
+  <main class="content" id="content">
+
+    <!-- ══════════════════════════════════════════════════════════
+         TAB 1 — OVERVIEW
+    ══════════════════════════════════════════════════════════════ -->
+    <section class="tab-panel active" id="tab-overview" data-label="Overview">
+
+      <h1>RAG Projects — Documentation Dashboard</h1>
+      <p class="subtitle">
+        A collection of Retrieval-Augmented Generation (RAG) projects exploring different retrieval strategies,
+        memory architectures, and LLM integration patterns. Each project is a self-contained, runnable application.
+      </p>
+
+      <h2 id="ov-projects">Projects at a Glance</h2>
+      <div class="card-grid">
+        <div class="card">
+          <h3>🔗 RAG LangChain Chroma</h3>
+          <p>Production-ready conversational document assistant built with LangChain and ChromaDB. Features hybrid HNSW + BM25 retrieval, dual-layer memory, and a browser chat UI.</p>
+          <p>
+            <span class="badge badge-teal">Port 8000</span>
+            <span class="badge badge-purple">LangChain</span>
+          </p>
+          <p style="margin-top:8px"><a href="#" onclick="switchTab('langchain',null);return false;">→ Full documentation</a></p>
+        </div>
+        <div class="card">
+          <h3>⚙️ RAG Custom Engine</h3>
+          <p>Complete RAG pipeline built from scratch — no LangChain, no ChromaDB. Custom HNSW, BM25, Self-RAG, multi-query, contextual compression, pipeline orchestrator.</p>
+          <p>
+            <span class="badge badge-teal">Port 8001</span>
+            <span class="badge badge-yellow">From Scratch</span>
+          </p>
+          <p style="margin-top:8px"><a href="#" onclick="switchTab('custom',null);return false;">→ Full documentation</a></p>
+        </div>
+      </div>
+
+      <h2 id="ov-quickstart">Quick Start</h2>
+      <div class="card-grid">
+        <div class="card">
+          <h4>RAG LangChain Chroma</h4>
+          <pre><code>cd rag-langchain-chroma
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+echo "OPENAI_API_KEY=sk-..." > .env
+python main.py
+# → http://localhost:8000</code></pre>
+        </div>
+        <div class="card">
+          <h4>RAG Custom Engine</h4>
+          <pre><code>cd rag-custom-engine
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+echo "OPENAI_API_KEY=sk-..." > .env
+python main.py
+# → http://localhost:8001</code></pre>
+        </div>
+      </div>
+
+      <h2 id="ov-layout">Repository Layout</h2>
+      <pre><code>RAG/
+├── README.md                      ← Root index
+├── docs/
+│   ├── documentation.html         ← This file
+│   ├── comprehensive-documentation.pdf
+│   └── executive-summary.pdf
+├── rag-langchain-chroma/          ← Project 1 (LangChain + ChromaDB)
+│   ├── README.md
+│   └── ...
+└── rag-custom-engine/             ← Project 2 (Pure Python from scratch)
+    ├── README.md
+    └── ...</code></pre>
+
+      <h2 id="ov-philosophy">Design Philosophy</h2>
+      <div class="card-grid">
+        <div class="card">
+          <h3>Project 1 Approach</h3>
+          <p><strong>Use the ecosystem.</strong> LangChain handles the retrieval chain, EnsembleRetriever fuses BM25 + HNSW, ChromaDB manages the vector index. The focus is on wiring well-tested components together and adding dual-layer memory on top.</p>
+        </div>
+        <div class="card">
+          <h3>Project 2 Approach</h3>
+          <p><strong>Build from scratch.</strong> Every algorithm (HNSW, BM25, RRF, Self-RAG, compression) is implemented in pure Python. The focus is on full transparency, learnability, and control over every step.</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         TAB 2 — RAG LANGCHAIN CHROMA
+    ══════════════════════════════════════════════════════════════ -->
+    <section class="tab-panel" id="tab-langchain" data-label="RAG LangChain Chroma">
+
+      <h1>RAG LangChain Chroma</h1>
+      <p class="subtitle">Production-ready conversational document assistant · FastAPI · LangChain · ChromaDB · Port 8000</p>
+
+      <h2 id="lc-intent">Intent &amp; Purpose</h2>
+      <p>This project demonstrates a <strong>production-quality RAG stack</strong> assembled from well-established ecosystem components. The intent is to show how LangChain, ChromaDB, and BM25 can be combined with a dual-layer memory system to build a document assistant that maintains conversational continuity — both within a session and across separate sessions.</p>
+      <div class="callout callout-info">
+        <strong>Key design decision:</strong> Use LangChain's <code>EnsembleRetriever</code> to fuse HNSW vector search and BM25 keyword search in a single retrieval call, without implementing fusion logic manually.
+      </div>
+
+      <h2 id="lc-features">Key Features</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Hybrid Retrieval</strong></td><td>ChromaDB HNSW vector index fused with BM25 via LangChain <code>EnsembleRetriever</code> (configurable 50/50 weights)</td></tr>
+            <tr><td><strong>In-Chat Memory</strong></td><td>Last 20 user/assistant turn pairs (40 messages) injected into every prompt as <code>HumanMessage</code>/<code>AIMessage</code></td></tr>
+            <tr><td><strong>Cross-Chat Memory</strong></td><td>LLM summaries of closed sessions embedded and semantically searched on every new query</td></tr>
+            <tr><td><strong>Document Sharing</strong></td><td>Mark documents as globally shared — always available as background context in every session</td></tr>
+            <tr><td><strong>Source Citations</strong></td><td>Every answer includes inline <code>[Source: file, Chunk: N]</code> citations and a References section</td></tr>
+            <tr><td><strong>Multi-format Ingestion</strong></td><td>PDF, DOCX, TXT, Markdown, CSV via LangChain document loaders</td></tr>
+            <tr><td><strong>Session Management</strong></td><td>Create, rename, delete, archive sessions; auto-title from first message</td></tr>
+            <tr><td><strong>Web UI</strong></td><td>Single-page app (SPA) served as static files — no separate build step</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="lc-architecture">Architecture</h2>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 740 420" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI',sans-serif">
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#9399b2"/>
+            </marker>
+          </defs>
+          <!-- Browser -->
+          <rect x="220" y="10" width="300" height="50" rx="8" fill="#313149" stroke="#3d3d5c" stroke-width="1.5"/>
+          <text x="370" y="32" text-anchor="middle" fill="#cdd6f4" font-size="13" font-weight="600">Browser (SPA)</text>
+          <text x="370" y="50" text-anchor="middle" fill="#9399b2" font-size="11">static/index.html + app.js</text>
+          <!-- arrow down -->
+          <line x1="370" y1="60" x2="370" y2="90" stroke="#9399b2" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="395" y="80" fill="#9399b2" font-size="10">HTTP/REST</text>
+          <!-- FastAPI -->
+          <rect x="100" y="90" width="540" height="55" rx="8" fill="#2a2a3e" stroke="#7c6af7" stroke-width="1.5"/>
+          <text x="370" y="113" text-anchor="middle" fill="#cdd6f4" font-size="13" font-weight="600">FastAPI · main.py</text>
+          <text x="370" y="133" text-anchor="middle" fill="#9399b2" font-size="11">api/routes.py · api/models.py (Pydantic schemas)</text>
+          <!-- arrow down -->
+          <line x1="370" y1="145" x2="370" y2="175" stroke="#9399b2" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- Query Pipeline row -->
+          <rect x="110" y="175" width="520" height="60" rx="6" fill="#313149" stroke="#3d3d5c" stroke-width="1"/>
+          <text x="370" y="196" text-anchor="middle" fill="#56b6c2" font-size="11" font-weight="600">Query Pipeline</text>
+          <!-- 3 boxes inside -->
+          <rect x="125" y="205" width="140" height="22" rx="4" fill="#2a2a3e" stroke="#3d3d5c"/>
+          <text x="195" y="220" text-anchor="middle" fill="#a6e3a1" font-size="10">indexing/ loader · chunker</text>
+          <rect x="300" y="205" width="150" height="22" rx="4" fill="#2a2a3e" stroke="#3d3d5c"/>
+          <text x="375" y="220" text-anchor="middle" fill="#f9e2af" font-size="10">retrieval/ hybrid_retriever</text>
+          <rect x="475" y="205" width="140" height="22" rx="4" fill="#2a2a3e" stroke="#3d3d5c"/>
+          <text x="545" y="220" text-anchor="middle" fill="#fab387" font-size="10">generation/ chain.py</text>
+          <!-- arrow down -->
+          <line x1="370" y1="235" x2="370" y2="260" stroke="#9399b2" stroke-width="1.5" marker-end="url(#arr)"/>
+          <!-- Memory row -->
+          <rect x="110" y="260" width="520" height="60" rx="6" fill="#313149" stroke="#3d3d5c" stroke-width="1"/>
+          <text x="370" y="282" text-anchor="middle" fill="#56b6c2" font-size="11" font-weight="600">memory/</text>
+          <rect x="125" y="290" width="145" height="22" rx="4" fill="#2a2a3e" stroke="#3d3d5c"/>
+          <text x="197" y="305" text-anchor="middle" fill="#cdd6f4" font-size="10">session_store.py</text>
+          <rect x="285" y="290" width="165" height="22" rx="4" fill="#2a2a3e" stroke="#3d3d5c"/>
+          <text x="367" y="305" text-anchor="middle" fill="#cdd6f4" font-size="10">chat_memory_store.py</text>
+          <rect x="465" y="290" width="150" height="22" rx="4" fill="#2a2a3e" stroke="#3d3d5c"/>
+          <text x="540" y="305" text-anchor="middle" fill="#cdd6f4" font-size="10">cross_chat_store.py</text>
+          <!-- 3 external boxes -->
+          <line x1="200" y1="320" x2="200" y2="360" stroke="#9399b2" stroke-width="1" marker-end="url(#arr)"/>
+          <line x1="370" y1="320" x2="370" y2="360" stroke="#9399b2" stroke-width="1" marker-end="url(#arr)"/>
+          <line x1="540" y1="320" x2="540" y2="360" stroke="#9399b2" stroke-width="1" marker-end="url(#arr)"/>
+          <rect x="110" y="360" width="165" height="45" rx="6" fill="#1f4a50" stroke="#56b6c2" stroke-width="1"/>
+          <text x="192" y="381" text-anchor="middle" fill="#56b6c2" font-size="11" font-weight="600">ChromaDB</text>
+          <text x="192" y="396" text-anchor="middle" fill="#9399b2" font-size="10">HNSW · 2 collections</text>
+          <rect x="295" y="360" width="150" height="45" rx="6" fill="#3a2860" stroke="#7c6af7" stroke-width="1"/>
+          <text x="370" y="381" text-anchor="middle" fill="#7c6af7" font-size="11" font-weight="600">OpenAI API</text>
+          <text x="370" y="396" text-anchor="middle" fill="#9399b2" font-size="10">Embeddings + GPT-4o-mini</text>
+          <rect x="465" y="360" width="155" height="45" rx="6" fill="#1f4a2a" stroke="#a6e3a1" stroke-width="1"/>
+          <text x="542" y="381" text-anchor="middle" fill="#a6e3a1" font-size="11" font-weight="600">Disk (JSON)</text>
+          <text x="542" y="396" text-anchor="middle" fill="#9399b2" font-size="10">sessions · settings</text>
+        </svg>
+      </div>
+
+      <h2 id="lc-modules">Module Breakdown</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Module</th><th>File(s)</th><th>Responsibility</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Entry Point</strong></td><td><code>main.py</code></td><td>FastAPI app setup, lifespan hooks, static file serving</td></tr>
+            <tr><td><strong>Configuration</strong></td><td><code>config.py</code></td><td>Pydantic Settings; loads .env; all tunable parameters</td></tr>
+            <tr><td><strong>API Layer</strong></td><td><code>api/routes.py</code>, <code>api/models.py</code></td><td>All REST endpoints; Pydantic request/response schemas</td></tr>
+            <tr><td><strong>Document Loader</strong></td><td><code>indexing/document_loader.py</code></td><td>LangChain format-specific loaders (PDF, DOCX, TXT, CSV, MD)</td></tr>
+            <tr><td><strong>Text Splitter</strong></td><td><code>indexing/text_splitter.py</code></td><td>LangChain recursive character splitter; attaches chunk_index metadata</td></tr>
+            <tr><td><strong>Vector Store</strong></td><td><code>vectorstore/chroma_store.py</code></td><td>ChromaDB singleton; HNSW collection setup; add/retrieve docs</td></tr>
+            <tr><td><strong>Hybrid Retrieval</strong></td><td><code>retrieval/hybrid_retriever.py</code></td><td>BM25Retriever from ChromaDB contents; LangChain EnsembleRetriever</td></tr>
+            <tr><td><strong>Generation</strong></td><td><code>generation/chain.py</code></td><td>System prompt; context + cross-chat formatting; LLM call; source extraction</td></tr>
+            <tr><td><strong>Session Memory</strong></td><td><code>memory/session_store.py</code></td><td>Per-session history; persisted to <code>data/sessions.json</code></td></tr>
+            <tr><td><strong>Cross-Chat Memory</strong></td><td><code>memory/chat_memory_store.py</code></td><td>LLM summarisation of closed sessions; upserts embeddings into ChromaDB <code>chat_memory</code> collection</td></tr>
+            <tr><td><strong>Sharing Flags</strong></td><td><code>memory/cross_chat_store.py</code></td><td>Tracks globally shared documents; persisted to JSON</td></tr>
+            <tr><td><strong>Frontend</strong></td><td><code>static/</code></td><td>SPA (HTML + CSS + vanilla JS)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="lc-memory">Memory System</h2>
+      <h3>In-Chat (Session) Memory</h3>
+      <p>Each session maintains an isolated message history. The last 20 user/assistant turn pairs are injected into every LangChain prompt as <code>MessagesPlaceholder</code>, giving the LLM full conversational context. Sessions survive server restarts via <code>data/sessions.json</code>.</p>
+      <h3>Cross-Chat Memory</h3>
+      <p>When a session is deleted or archived:</p>
+      <ol>
+        <li>Full transcript is sent to the LLM with a summarisation prompt → 200–400 word dense summary.</li>
+        <li>Summary is embedded with <code>text-embedding-3-small</code>.</li>
+        <li>Stored/upserted in the <code>chat_memory</code> ChromaDB collection.</li>
+        <li>On every new query, top-3 semantically similar summaries are retrieved and injected into the system prompt.</li>
+      </ol>
+
+      <h2 id="lc-retrieval">Hybrid Retrieval</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Retriever</th><th>Mechanism</th><th>Strength</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Vector (HNSW)</strong></td><td>ANN search on OpenAI embeddings via ChromaDB</td><td>Semantic similarity; paraphrase matching</td></tr>
+            <tr><td><strong>BM25</strong></td><td>Keyword TF-IDF ranking via rank-bm25 in memory</td><td>Exact term matching; rare words</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Results are merged using LangChain's <code>EnsembleRetriever</code> with configurable weights (default 50/50) and deduplicated.</p>
+
+      <h2 id="lc-api">API Reference</h2>
+      <details><summary>Documents endpoints</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>POST</code></td><td><code>/api/upload</code></td><td>Upload a document (multipart/form-data)</td></tr>
+              <tr><td><code>GET</code></td><td><code>/api/documents</code></td><td>List ingested documents with chunk counts</td></tr>
+              <tr><td><code>DELETE</code></td><td><code>/api/documents/{filename}</code></td><td>Delete document and all its chunks</td></tr>
+              <tr><td><code>PUT</code></td><td><code>/api/documents/{filename}/shared</code></td><td>Toggle global sharing</td></tr>
+              <tr><td><code>GET</code></td><td><code>/api/shared-documents</code></td><td>List globally shared documents</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+      <details><summary>Session endpoints</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>POST</code></td><td><code>/api/sessions</code></td><td>Create new session</td></tr>
+              <tr><td><code>GET</code></td><td><code>/api/sessions</code></td><td>List all sessions</td></tr>
+              <tr><td><code>GET</code></td><td><code>/api/sessions/{id}</code></td><td>Get session message history</td></tr>
+              <tr><td><code>PUT</code></td><td><code>/api/sessions/{id}/rename</code></td><td>Rename session</td></tr>
+              <tr><td><code>DELETE</code></td><td><code>/api/sessions/{id}</code></td><td>Delete + auto-archive</td></tr>
+              <tr><td><code>POST</code></td><td><code>/api/sessions/{id}/clear</code></td><td>Clear history (keep session)</td></tr>
+              <tr><td><code>POST</code></td><td><code>/api/sessions/{id}/archive</code></td><td>Manually archive to Cross-Chat Memory</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+      <details><summary>Query endpoint</summary>
+        <pre><code>POST /api/query
+{
+  "question": "What is HNSW?",
+  "session_id": "optional-uuid",
+  "vector_weight": 0.5,
+  "num_results": 5
+}</code></pre>
+        <pre><code>Response:
+{
+  "answer": "HNSW is...",
+  "sources": [{"filename": "...", "page": 3, "chunk_index": 12, "snippet": "..."}],
+  "session_id": "abc-123",
+  "cross_chat_refs": [{"session_title": "...", "snippet": "..."}]
+}</code></pre>
+      </details>
+
+      <h2 id="lc-config">Configuration (.env)</h2>
+      <pre><code>OPENAI_API_KEY=sk-...
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+OPENAI_CHAT_MODEL=gpt-4o-mini
+CHROMA_PERSIST_DIR=./data/chroma_db
+HNSW_SPACE=cosine
+HNSW_EF_CONSTRUCTION=200
+HNSW_EF_SEARCH=150
+HNSW_MAX_NEIGHBORS=16
+CHUNK_SIZE=1000
+CHUNK_OVERLAP=200
+VECTOR_SEARCH_K=5
+BM25_SEARCH_K=5
+VECTOR_WEIGHT=0.5
+BM25_WEIGHT=0.5</code></pre>
+
+      <h2 id="lc-stack">Tech Stack</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Component</th><th>Technology</th></tr></thead>
+          <tbody>
+            <tr><td>Web Framework</td><td>FastAPI + Uvicorn</td></tr>
+            <tr><td>LLM Orchestration</td><td>LangChain</td></tr>
+            <tr><td>Vector Database</td><td>ChromaDB (HNSW)</td></tr>
+            <tr><td>Keyword Search</td><td>rank-bm25 via LangChain BM25Retriever</td></tr>
+            <tr><td>Embeddings</td><td>OpenAI text-embedding-3-small</td></tr>
+            <tr><td>Chat Model</td><td>OpenAI gpt-4o-mini</td></tr>
+            <tr><td>Data Validation</td><td>Pydantic v2 + pydantic-settings</td></tr>
+            <tr><td>Document Parsing</td><td>pypdf, docx2txt</td></tr>
+            <tr><td>Frontend</td><td>Vanilla HTML5 / CSS3 / JS (no build step)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         TAB 3 — RAG CUSTOM ENGINE
+    ══════════════════════════════════════════════════════════════ -->
+    <section class="tab-panel" id="tab-custom" data-label="RAG Custom Engine">
+
+      <h1>RAG Custom Engine</h1>
+      <p class="subtitle">Complete RAG pipeline from scratch — No LangChain · No ChromaDB · Pure Python · Port 8001</p>
+
+      <h2 id="ce-intent">Intent &amp; Purpose</h2>
+      <p>This project proves that every component of a modern RAG system can be implemented in pure Python with full algorithmic transparency. It is a <strong>learning-oriented reference implementation</strong> that trades ecosystem convenience for visibility into every step of the retrieval and generation process.</p>
+      <div class="callout callout-warn">
+        <strong>Philosophy:</strong> If LangChain's <code>EnsembleRetriever</code> is a black box, this project opens the box — showing exactly how score normalisation, RRF, and Self-RAG grading work at the code level.
+      </div>
+
+      <h2 id="ce-features">Key Features</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Custom HNSW Vector Store</strong></td><td>Pure-Python HNSW graph + brute-force cosine fallback; JSON persistence; thread-safe singleton</td></tr>
+            <tr><td><strong>Custom BM25 Index</strong></td><td>Okapi BM25 from scratch; add/remove by metadata; JSON persistence</td></tr>
+            <tr><td><strong>Hybrid Retrieval</strong></td><td>Weighted score ensemble and Reciprocal Rank Fusion (RRF) modes; selectable per request</td></tr>
+            <tr><td><strong>Multi-Query Retriever</strong></td><td>LLM generates N alternative phrasings; all variants searched; results merged via RRF</td></tr>
+            <tr><td><strong>Self-RAG</strong></td><td>3-stage LLM gates: retrieval decision → relevance grading → hallucination check</td></tr>
+            <tr><td><strong>Contextual Compression</strong></td><td>LLM extracts only query-relevant sentences from each retrieved chunk</td></tr>
+            <tr><td><strong>Pipeline Orchestrator</strong></td><td>Step-by-step trace with timing; async SSE streaming to frontend; trace stored per session</td></tr>
+            <tr><td><strong>Dual-Layer Memory</strong></td><td>In-chat session history + cross-session LLM summarisation with vector search</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="ce-architecture">Architecture</h2>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 760 480" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI',sans-serif">
+          <defs>
+            <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#9399b2"/>
+            </marker>
+          </defs>
+          <!-- Browser -->
+          <rect x="200" y="10" width="360" height="50" rx="8" fill="#313149" stroke="#3d3d5c" stroke-width="1.5"/>
+          <text x="380" y="32" text-anchor="middle" fill="#cdd6f4" font-size="13" font-weight="600">Browser (SPA)</text>
+          <text x="380" y="50" text-anchor="middle" fill="#9399b2" font-size="11">Chat UI + Pipeline Trace Visualiser</text>
+          <!-- arrow -->
+          <line x1="380" y1="60" x2="380" y2="90" stroke="#9399b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <text x="405" y="80" fill="#9399b2" font-size="10">HTTP/REST :8001</text>
+          <!-- FastAPI -->
+          <rect x="80" y="90" width="600" height="50" rx="8" fill="#2a2a3e" stroke="#7c6af7" stroke-width="1.5"/>
+          <text x="380" y="114" text-anchor="middle" fill="#cdd6f4" font-size="13" font-weight="600">FastAPI · main.py · api/api_routes.py</text>
+          <text x="380" y="131" text-anchor="middle" fill="#9399b2" font-size="11">api/request_models.py (Pydantic v2)</text>
+          <!-- arrow -->
+          <line x1="380" y1="140" x2="380" y2="165" stroke="#9399b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <!-- Orchestrator -->
+          <rect x="80" y="165" width="600" height="55" rx="8" fill="#3a2860" stroke="#7c6af7" stroke-width="2"/>
+          <text x="380" y="188" text-anchor="middle" fill="#7c6af7" font-size="12" font-weight="700">orchestration/rag_orchestrator.py</text>
+          <text x="380" y="207" text-anchor="middle" fill="#9399b2" font-size="10">Pipeline coordinator · PipelineStep/Config/Result · async SSE streaming</text>
+          <!-- arrow -->
+          <line x1="380" y1="220" x2="380" y2="245" stroke="#9399b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <!-- 3 pillars row -->
+          <rect x="85" y="245" width="175" height="80" rx="6" fill="#313149" stroke="#a6e3a1" stroke-width="1"/>
+          <text x="172" y="268" text-anchor="middle" fill="#a6e3a1" font-size="11" font-weight="600">indexing/</text>
+          <text x="172" y="286" text-anchor="middle" fill="#9399b2" font-size="10">hnsw_vector_store</text>
+          <text x="172" y="300" text-anchor="middle" fill="#9399b2" font-size="10">bm25_index</text>
+          <text x="172" y="314" text-anchor="middle" fill="#9399b2" font-size="10">openai_embeddings</text>
+
+          <rect x="292" y="245" width="175" height="80" rx="6" fill="#313149" stroke="#f9e2af" stroke-width="1"/>
+          <text x="379" y="268" text-anchor="middle" fill="#f9e2af" font-size="11" font-weight="600">retrieval/</text>
+          <text x="379" y="286" text-anchor="middle" fill="#9399b2" font-size="10">hybrid_search (weighted+RRF)</text>
+          <text x="379" y="300" text-anchor="middle" fill="#9399b2" font-size="10">multi_query_retriever</text>
+          <text x="379" y="314" text-anchor="middle" fill="#9399b2" font-size="10">adaptive_retrieval (Self-RAG)</text>
+
+          <rect x="499" y="245" width="176" height="80" rx="6" fill="#313149" stroke="#fab387" stroke-width="1"/>
+          <text x="587" y="268" text-anchor="middle" fill="#fab387" font-size="11" font-weight="600">generation/</text>
+          <text x="587" y="286" text-anchor="middle" fill="#9399b2" font-size="10">answer_generator</text>
+          <text x="587" y="300" text-anchor="middle" fill="#9399b2" font-size="10">contextual_compression</text>
+          <text x="587" y="314" text-anchor="middle" fill="#9399b2" font-size="10">OpenAI direct calls</text>
+
+          <!-- arrows to memory -->
+          <line x1="172" y1="325" x2="172" y2="355" stroke="#9399b2" stroke-width="1" marker-end="url(#arr2)"/>
+          <line x1="379" y1="325" x2="379" y2="355" stroke="#9399b2" stroke-width="1" marker-end="url(#arr2)"/>
+          <line x1="587" y1="325" x2="587" y2="355" stroke="#9399b2" stroke-width="1" marker-end="url(#arr2)"/>
+          <!-- Memory row -->
+          <rect x="85" y="355" width="590" height="55" rx="6" fill="#1f3a1f" stroke="#a6e3a1" stroke-width="1"/>
+          <text x="380" y="378" text-anchor="middle" fill="#a6e3a1" font-size="11" font-weight="600">memory/</text>
+          <text x="200" y="396" text-anchor="middle" fill="#9399b2" font-size="10">session_history_store</text>
+          <text x="400" y="396" text-anchor="middle" fill="#9399b2" font-size="10">cross_session_memory</text>
+          <text x="590" y="396" text-anchor="middle" fill="#9399b2" font-size="10">trace_store</text>
+          <!-- bottom -->
+          <line x1="380" y1="410" x2="380" y2="445" stroke="#9399b2" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <rect x="200" y="445" width="360" height="30" rx="6" fill="#2a2a3e" stroke="#3d3d5c"/>
+          <text x="380" y="465" text-anchor="middle" fill="#9399b2" font-size="10">JSON files: vector_store · bm25_index · sessions · traces</text>
+        </svg>
+      </div>
+
+      <h2 id="ce-pipeline">Pipeline Steps</h2>
+      <p>The orchestrator runs up to 8 pipeline steps per query. Each step is configurable and can be enabled/disabled per request:</p>
+      <div class="pipeline">
+        <div class="step">1. Cross-Session Memory Search</div>
+        <span class="step-arrow">→</span>
+        <div class="step">2. Retrieval Decision (Self-RAG)</div>
+        <span class="step-arrow">→</span>
+        <div class="step">3. Multi-Query Expansion</div>
+        <span class="step-arrow">→</span>
+        <div class="step">4. Hybrid Search</div>
+        <span class="step-arrow">→</span>
+        <div class="step">5. Relevance Grading (Self-RAG)</div>
+        <span class="step-arrow">→</span>
+        <div class="step">6. Contextual Compression</div>
+        <span class="step-arrow">→</span>
+        <div class="step">7. Answer Generation</div>
+        <span class="step-arrow">→</span>
+        <div class="step">8. Hallucination Check (Self-RAG)</div>
+      </div>
+
+      <h2 id="ce-selfrag">Self-RAG (Adaptive Retrieval)</h2>
+      <h3>Stage 1 — Retrieval Decision</h3>
+      <p>Before any retrieval, the LLM evaluates whether the query requires document lookup. Greetings, meta questions, and simple arithmetic skip retrieval entirely and go straight to generation, saving latency and API cost.</p>
+      <h3>Stage 2 — Relevance Grading</h3>
+      <p>After retrieval, each chunk is individually graded by the LLM for relevance to the query. Chunks marked <code>not_relevant</code> are filtered out before the answer is generated, reducing hallucination risk from noisy context.</p>
+      <h3>Stage 3 — Hallucination Check</h3>
+      <p>After generation, the LLM verifies that every factual claim in the answer is grounded in the provided context. Ungrounded answers are flagged in the pipeline trace.</p>
+
+      <h2 id="ce-multiquery">Multi-Query Retriever</h2>
+      <p>Generates N alternative phrasings of the user's query, runs hybrid search for each, then merges all result lists via RRF. A document appearing in multiple result sets receives a compounded rank score, improving recall for queries that benefit from diverse phrasing.</p>
+
+      <h2 id="ce-compression">Contextual Compression</h2>
+      <p>For each retrieved chunk (≥ 200 characters), the LLM extracts only the sentences directly relevant to the query. This reduces the context window size while retaining key information. Compression statistics (original length, compressed length, ratio) are tracked in the pipeline trace per chunk.</p>
+
+      <h2 id="ce-retrieval">Hybrid Retrieval Modes</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mode</th><th>Mechanism</th><th>When to use</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Weighted Ensemble</strong></td><td>Min-max normalise both score lists; combine: <code>score = v×w_v + b×w_b</code></td><td>When retriever quality is predictable and weights can be tuned</td></tr>
+            <tr><td><strong>RRF</strong></td><td>Position-based: <code>score = Σ 1/(60 + rank_i)</code></td><td>When score scales differ between retrievers; more robust default</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="ce-api">API Reference</h2>
+      <details><summary>Documents endpoints</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>POST</code></td><td><code>/api/upload</code></td><td>Upload and ingest document (multipart/form-data)</td></tr>
+              <tr><td><code>GET</code></td><td><code>/api/documents</code></td><td>List ingested documents with chunk counts and sharing flags</td></tr>
+              <tr><td><code>DELETE</code></td><td><code>/api/documents/{filename}</code></td><td>Delete all chunks for a document</td></tr>
+              <tr><td><code>PUT</code></td><td><code>/api/documents/{filename}/shared</code></td><td>Toggle global sharing</td></tr>
+              <tr><td><code>GET</code></td><td><code>/api/shared-documents</code></td><td>List globally shared documents</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+      <details><summary>Session endpoints</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>POST</code></td><td><code>/api/sessions</code></td><td>Create new session</td></tr>
+              <tr><td><code>GET</code></td><td><code>/api/sessions</code></td><td>List all sessions</td></tr>
+              <tr><td><code>GET</code></td><td><code>/api/sessions/{id}</code></td><td>Get session message history</td></tr>
+              <tr><td><code>PUT</code></td><td><code>/api/sessions/{id}/rename</code></td><td>Rename session</td></tr>
+              <tr><td><code>DELETE</code></td><td><code>/api/sessions/{id}</code></td><td>Delete + auto-archive to Cross-Session Memory</td></tr>
+              <tr><td><code>POST</code></td><td><code>/api/sessions/{id}/clear</code></td><td>Clear history (keep session)</td></tr>
+              <tr><td><code>POST</code></td><td><code>/api/sessions/{id}/archive</code></td><td>Manually archive to Cross-Session Memory</td></tr>
+              <tr><td><code>GET</code></td><td><code>/api/sessions/{id}/traces</code></td><td>Get all pipeline traces for this session</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+      <details><summary>Query endpoint (with pipeline config)</summary>
+        <pre><code>POST /api/query
+{
+  "question": "What is RRF?",
+  "session_id": "optional-uuid",
+  "pipeline_config": {
+    "use_multi_query": false,
+    "use_self_rag": false,
+    "use_compression": false,
+    "vector_method": "brute_force",
+    "merge_method": "weighted",
+    "vector_k": 5, "bm25_k": 5, "top_k": 5,
+    "vector_weight": 0.5, "bm25_weight": 0.5
+  }
+}</code></pre>
+        <pre><code>Response includes:
+  answer, sources, session_id, cross_chat_refs,
+  pipeline_steps: [{name, status, input_summary, output_summary, duration_ms, details}]</code></pre>
+      </details>
+      <details><summary>SSE streaming endpoint</summary>
+        <pre><code>POST /api/query/stream
+→ text/event-stream response
+
+data: {"type": "step_start",    "data": {"name": "hybrid_search"}}
+data: {"type": "step_complete", "data": {"name": "hybrid_search", "duration_ms": 142.5}}
+data: {"type": "answer",        "data": {"answer": "...", "sources": [...], "pipeline_steps": [...]}}
+data: {"type": "error",         "data": {"message": "..."}}</code></pre>
+      </details>
+
+      <h2 id="ce-config">Configuration (.env)</h2>
+      <pre><code>OPENAI_API_KEY=sk-...
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+OPENAI_CHAT_MODEL=gpt-4o-mini
+HNSW_M=16
+HNSW_EF_CONSTRUCTION=200
+HNSW_EF_SEARCH=150
+CHUNK_SIZE=1000
+CHUNK_OVERLAP=200
+VECTOR_SEARCH_K=5
+BM25_SEARCH_K=5
+VECTOR_WEIGHT=0.5
+BM25_WEIGHT=0.5</code></pre>
+
+      <h2 id="ce-stack">Tech Stack</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Component</th><th>Technology</th></tr></thead>
+          <tbody>
+            <tr><td>Web Framework</td><td>FastAPI + Uvicorn</td></tr>
+            <tr><td>Vector Store</td><td>Custom HNSW + brute-force cosine (pure Python, JSON persistence)</td></tr>
+            <tr><td>Keyword Search</td><td>Custom Okapi BM25 (pure Python, JSON persistence)</td></tr>
+            <tr><td>Hybrid Fusion</td><td>Weighted ensemble + RRF (pure Python)</td></tr>
+            <tr><td>LLM Calls</td><td>OpenAI API direct (no SDK wrapper abstraction)</td></tr>
+            <tr><td>Data Validation</td><td>Pydantic v2 + pydantic-settings</td></tr>
+            <tr><td>Document Parsing</td><td>pypdf, python-docx, built-in csv/text</td></tr>
+            <tr><td>Testing</td><td>pytest</td></tr>
+            <tr><td>Frontend</td><td>Vanilla HTML5 / CSS3 / JS (no build step)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         TAB 4 — COMPARISON
+    ══════════════════════════════════════════════════════════════ -->
+    <section class="tab-panel" id="tab-compare" data-label="Comparison">
+
+      <h1>Side-by-Side Comparison</h1>
+      <p class="subtitle">When to use which project, and how they differ at every layer.</p>
+
+      <h2 id="cmp-matrix">Feature Matrix</h2>
+      <div class="table-wrap">
+        <table class="matrix">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>RAG LangChain Chroma</th>
+              <th>RAG Custom Engine</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Vector Store</td><td class="yes">ChromaDB (HNSW)</td><td class="yes">Custom HNSW + brute-force (JSON)</td></tr>
+            <tr><td>BM25 Index</td><td class="yes">rank-bm25 library</td><td class="yes">Custom Okapi BM25 (pure Python)</td></tr>
+            <tr><td>Hybrid Fusion</td><td class="yes">LangChain EnsembleRetriever</td><td class="yes">Weighted ensemble + RRF (pure Python)</td></tr>
+            <tr><td>RRF Fusion Mode</td><td class="no">No</td><td class="yes">Yes</td></tr>
+            <tr><td>Multi-Query Retriever</td><td class="no">No</td><td class="yes">Yes (LLM-generated variants)</td></tr>
+            <tr><td>Self-RAG</td><td class="no">No</td><td class="yes">Yes (3-stage LLM evaluation)</td></tr>
+            <tr><td>Contextual Compression</td><td class="no">No</td><td class="yes">Yes (LLM sentence extraction)</td></tr>
+            <tr><td>Pipeline Trace / SSE</td><td class="no">No</td><td class="yes">Yes (step-by-step + SSE stream)</td></tr>
+            <tr><td>In-Chat Memory</td><td class="yes">Yes (last 20 turns)</td><td class="yes">Yes (last 20 turns)</td></tr>
+            <tr><td>Cross-Session Memory</td><td class="yes">Yes (ChromaDB collection)</td><td class="yes">Yes (custom vector search, JSON)</td></tr>
+            <tr><td>Document Sharing</td><td class="yes">Yes (global flag)</td><td class="yes">Yes (global flag)</td></tr>
+            <tr><td>Source Citations</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+            <tr><td>SSE Streaming (steps)</td><td class="no">No</td><td class="yes">Yes</td></tr>
+            <tr><td>Token-by-token streaming</td><td class="no">No</td><td class="no">No</td></tr>
+            <tr><td>External Vector DB</td><td class="yes">ChromaDB required</td><td class="yes">None required</td></tr>
+            <tr><td>Authentication</td><td class="no">No</td><td class="no">No</td></tr>
+            <tr><td>Persistence Format</td><td class="partial">ChromaDB + JSON</td><td class="partial">JSON only</td></tr>
+            <tr><td>Port</td><td>8000</td><td>8001</td></tr>
+            <tr><td>Framework Dependency</td><td class="partial">LangChain, ChromaDB</td><td class="yes">FastAPI only</td></tr>
+            <tr><td>Algorithm Transparency</td><td class="no">Low (framework-abstracted)</td><td class="yes">High (every line visible)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="cmp-when">When to Use Which</h2>
+      <div class="card-grid">
+        <div class="card">
+          <h3>Use RAG LangChain Chroma when…</h3>
+          <ul>
+            <li>You need a production-ready document assistant <strong>quickly</strong></li>
+            <li>You want to build on <strong>well-maintained ecosystem components</strong></li>
+            <li>Your team already knows LangChain</li>
+            <li>You need <strong>ChromaDB's persistent, scalable HNSW index</strong></li>
+            <li>Simplicity of setup matters more than algorithmic transparency</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Use RAG Custom Engine when…</h3>
+          <ul>
+            <li>You want to <strong>understand every algorithm</strong> end-to-end</li>
+            <li>You need <strong>Self-RAG, multi-query, or contextual compression</strong></li>
+            <li>You want to experiment with <strong>RRF vs. weighted fusion</strong></li>
+            <li>You need the <strong>pipeline trace visualiser</strong> for debugging</li>
+            <li>You cannot add external vector DB dependencies</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2 id="cmp-retrieval">Retrieval Strategy Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Aspect</th><th>LangChain Chroma</th><th>Custom Engine</th></tr></thead>
+          <tbody>
+            <tr><td>Fusion algorithm</td><td>LangChain EnsembleRetriever (weighted)</td><td>Weighted ensemble OR RRF (selectable per request)</td></tr>
+            <tr><td>Score normalisation</td><td>LangChain internal</td><td>Explicit min-max normalisation (visible in code)</td></tr>
+            <tr><td>Query expansion</td><td>Single query</td><td>Optional LLM multi-query (N variants)</td></tr>
+            <tr><td>Relevance filtering</td><td>None</td><td>Optional Self-RAG relevance grading</td></tr>
+            <tr><td>Context pruning</td><td>None</td><td>Optional contextual compression</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="cmp-memory">Memory System Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>LangChain Chroma</th><th>Custom Engine</th></tr></thead>
+          <tbody>
+            <tr><td>In-chat history</td><td>LangChain HumanMessage/AIMessage in prompt</td><td>Custom session store; raw dict injection into prompt</td></tr>
+            <tr><td>Cross-session store</td><td>ChromaDB <code>chat_memory</code> collection</td><td>Custom vector store, <code>memory_</code> namespace, JSON</td></tr>
+            <tr><td>Summarisation</td><td>OpenAI LLM call on session delete/archive</td><td>OpenAI LLM call on session delete/archive</td></tr>
+            <tr><td>Cross-session search</td><td>ChromaDB ANN query</td><td>Custom HNSW / brute-force cosine query</td></tr>
+            <tr><td>Pipeline traces</td><td>Not stored</td><td>Full trace per query stored in <code>traces.json</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         TAB 5 — DEFICIENCIES & ROADMAP
+    ══════════════════════════════════════════════════════════════ -->
+    <section class="tab-panel" id="tab-deficiencies" data-label="Deficiencies &amp; Roadmap">
+
+      <h1>Deficiencies &amp; Roadmap</h1>
+      <p class="subtitle">Honest assessment of current limitations across both projects, and suggested improvements.</p>
+
+      <div class="callout callout-info">
+        <strong>Legend:</strong>
+        <span class="sev sev-high">HIGH</span> Significant limitation affecting production readiness.
+        <span class="sev sev-medium">MEDIUM</span> Affects performance or cost in common scenarios.
+        <span class="sev sev-low">LOW</span> Nice-to-have improvements.
+      </div>
+
+      <h2 id="def-shared">Shared Deficiencies (Both Projects)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Severity</th><th>Area</th><th>Issue</th><th>Suggested Fix</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="sev sev-high">HIGH</span></td>
+              <td>Authentication</td>
+              <td>No authentication or authorisation layer. Any client with network access can read, upload, or delete all data.</td>
+              <td>Add API key middleware or OAuth2 with FastAPI security utilities.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-high">HIGH</span></td>
+              <td>Answer Streaming</td>
+              <td>Answers are not streamed token-by-token. The full generation completes before the response is sent, creating latency spikes on long answers.</td>
+              <td>Use OpenAI <code>stream=True</code> with async generators and SSE in both projects.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-medium">MEDIUM</span></td>
+              <td>Pagination</td>
+              <td><code>GET /api/documents</code> and <code>GET /api/sessions</code> return all records without pagination. Large collections will cause slow responses.</td>
+              <td>Add <code>?limit=N&amp;offset=M</code> query parameters to list endpoints.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-medium">MEDIUM</span></td>
+              <td>Embedding Concurrency</td>
+              <td>Document embeddings are computed in a synchronous batch in the request handler thread. Large documents block the event loop.</td>
+              <td>Wrap embedding calls in <code>run_in_executor</code> or use a background task queue (e.g., Celery, ARQ).</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-medium">MEDIUM</span></td>
+              <td>Error Handling</td>
+              <td>OpenAI API failures (rate limits, timeouts) bubble up as 500 errors with no retry logic.</td>
+              <td>Add exponential back-off retry using <code>tenacity</code> around all OpenAI calls.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-low">LOW</span></td>
+              <td>No Re-ranking</td>
+              <td>No cross-encoder or neural re-ranking step after retrieval. Final ranking relies entirely on BM25 + vector fusion.</td>
+              <td>Integrate a cross-encoder model (e.g., <code>cross-encoder/ms-marco-MiniLM</code> via sentence-transformers) as an optional re-ranking step.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-low">LOW</span></td>
+              <td>No Evaluation</td>
+              <td>No automated evaluation of retrieval precision/recall or answer quality (RAGAS, TruLens).</td>
+              <td>Integrate RAGAS for faithfulness, answer relevancy, and context precision metrics.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="def-langchain">RAG LangChain Chroma — Specific Issues</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Severity</th><th>Area</th><th>Issue</th><th>Suggested Fix</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="sev sev-medium">MEDIUM</span></td>
+              <td>No Advanced Retrieval</td>
+              <td>No multi-query expansion, Self-RAG, or contextual compression. Single-shot retrieval with a fixed query.</td>
+              <td>Port the multi-query and compression components from the Custom Engine, or use LangChain's <code>MultiQueryRetriever</code>.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-medium">MEDIUM</span></td>
+              <td>ChromaDB Persistence</td>
+              <td>ChromaDB stores data in a local directory; not suitable for multi-instance deployments without a shared filesystem or a hosted ChromaDB server.</td>
+              <td>Configure ChromaDB in client-server mode, or migrate to a hosted vector DB (Pinecone, Weaviate, Qdrant).</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-low">LOW</span></td>
+              <td>No Pipeline Trace</td>
+              <td>No visibility into retrieval scores, chunk counts, or timing per request. Debugging is harder.</td>
+              <td>Add a <code>debug</code> flag to the query endpoint that returns retrieval metadata.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-low">LOW</span></td>
+              <td>LangChain Version Coupling</td>
+              <td>LangChain's API changes frequently; the project pins ecosystem packages that may drift out of compatibility.</td>
+              <td>Pin exact versions in <code>requirements.txt</code> and add a CI check for dependency conflicts.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="def-custom">RAG Custom Engine — Specific Issues</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Severity</th><th>Area</th><th>Issue</th><th>Suggested Fix</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="sev sev-high">HIGH</span></td>
+              <td>JSON Index Scalability</td>
+              <td>All indexes (vector store, BM25) are loaded fully into memory and serialised to JSON. Does not scale beyond tens of thousands of chunks; will OOM on large corpora.</td>
+              <td>Replace JSON persistence with FAISS or Annoy for vectors and SQLite for BM25; load lazily on query.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-high">HIGH</span></td>
+              <td>HNSW Implementation</td>
+              <td>Pedagogical HNSW — lacks proper multi-layer graph construction, ef-search tuning, and node deletion. The brute-force fallback is O(n) per query.</td>
+              <td>Use FAISS (HNSW index) or hnswlib for production-grade HNSW with proper recall guarantees.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-medium">MEDIUM</span></td>
+              <td>Self-RAG API Cost</td>
+              <td>With <code>use_self_rag=true</code>, every query triggers 2–3 additional LLM calls (retrieval decision + per-chunk grading + hallucination check), multiplying API cost and latency by 3–5×.</td>
+              <td>Cache retrieval decision results by query hash; batch chunk grading into a single LLM call.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-medium">MEDIUM</span></td>
+              <td>Multi-Query Cost</td>
+              <td><code>use_multi_query=true</code> triggers 1 extra LLM call for variant generation plus N×hybrid_search calls. Significantly increases latency (often 3–8 seconds extra).</td>
+              <td>Limit to N=2 variants by default; add a latency budget parameter.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-medium">MEDIUM</span></td>
+              <td>Compression Cost</td>
+              <td><code>use_compression=true</code> triggers one LLM call per retrieved chunk (often 5 chunks → 5 calls). Adds 5–10 seconds to query latency.</td>
+              <td>Batch all chunks into a single LLM call with a structured output format; skip compression for chunks &lt; 300 characters.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-medium">MEDIUM</span></td>
+              <td>JSON Write Concurrency</td>
+              <td>Simple threading lock flushing the entire JSON file on every write. High-concurrency scenarios will see lock contention.</td>
+              <td>Use SQLite (WAL mode) for concurrent write safety, or an async lock with debounced flush.</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-low">LOW</span></td>
+              <td>No Answer Streaming</td>
+              <td>The SSE endpoint streams pipeline step events but the answer text arrives as a single event after full generation. No token-by-token streaming.</td>
+              <td>Use OpenAI <code>stream=True</code> and emit token chunks as SSE events after all steps complete.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="def-roadmap">Roadmap</h2>
+      <div class="card-grid">
+        <div class="card">
+          <h3>🔜 Near-term</h3>
+          <ul>
+            <li>Token-by-token answer streaming in both projects</li>
+            <li>API key authentication middleware</li>
+            <li>Exponential back-off on OpenAI calls</li>
+            <li>Pagination on list endpoints</li>
+            <li>Batched chunk grading in Self-RAG</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>📅 Medium-term</h3>
+          <ul>
+            <li>FAISS / hnswlib backend for Custom Engine</li>
+            <li>RAGAS evaluation integration</li>
+            <li>Cross-encoder re-ranking step</li>
+            <li>Multi-user session isolation</li>
+            <li>Hosted ChromaDB or Qdrant for LangChain project</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>🔭 Long-term</h3>
+          <ul>
+            <li>Graph RAG (entity/relationship extraction)</li>
+            <li>Agentic RAG with tool use</li>
+            <li>Multi-modal document support (images, tables)</li>
+            <li>Deployment templates (Docker, Railway, Fly.io)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>✅ Implemented</h3>
+          <ul>
+            <li>Hybrid retrieval (HNSW + BM25) in both projects</li>
+            <li>Dual-layer memory in both projects</li>
+            <li>Self-RAG 3-stage evaluation (Custom Engine)</li>
+            <li>Multi-query retriever (Custom Engine)</li>
+            <li>Contextual compression (Custom Engine)</li>
+            <li>Pipeline trace + SSE streaming (Custom Engine)</li>
+          </ul>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+<div id="toast">✓ Context copied to clipboard</div>
+
+<script>
+  // ── Tab switching ──────────────────────────────────────────────
+  function switchTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const panel = document.getElementById('tab-' + id);
+    if (panel) panel.classList.add('active');
+    if (btn) { btn.classList.add('active'); }
+    else {
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + id + "'"))
+          b.classList.add('active');
+      });
+    }
+    buildSidebar();
+    window.scrollTo(0, 0);
+  }
+
+  // ── Sidebar generation ────────────────────────────────────────
+  function buildSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const active = document.querySelector('.tab-panel.active');
+    if (!active) return;
+    const headings = active.querySelectorAll('h2[id], h3[id]');
+    let html = '<div class="nav-section">' + (active.dataset.label || 'Contents') + '</div>';
+    headings.forEach(h => {
+      const isH3 = h.tagName === 'H3';
+      html += `<a class="nav-link" href="#${h.id}" style="${isH3 ? 'padding-left:34px;font-size:12px' : ''}">${h.textContent}</a>`;
+    });
+    sidebar.innerHTML = html;
+
+    // Highlight active nav link on scroll
+    const links = sidebar.querySelectorAll('.nav-link');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          links.forEach(l => l.classList.remove('active'));
+          const link = sidebar.querySelector(`[href="#${entry.target.id}"]`);
+          if (link) link.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    active.querySelectorAll('h2[id], h3[id]').forEach(h => observer.observe(h));
+  }
+
+  // ── Copy current tab context ──────────────────────────────────
+  function copyCurrentTab() {
+    const active = document.querySelector('.tab-panel.active');
+    if (!active) return;
+    const label = active.dataset.label || 'RAG Projects';
+    const text = [
+      `=== RAG Projects Documentation — ${label} ===`,
+      `Generated: ${new Date().toISOString()}`,
+      '',
+      active.innerText.replace(/\n{3,}/g, '\n\n').trim()
+    ].join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    });
+  }
+
+  // ── Init ──────────────────────────────────────────────────────
+  buildSidebar();
+</script>
+</body>
+</html>

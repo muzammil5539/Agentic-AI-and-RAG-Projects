@@ -39,7 +39,7 @@ A collection of **Retrieval-Augmented Generation (RAG)** projects exploring diff
 
 **Stack:** FastAPI · OpenAI · Pure Python · Vanilla JS
 
-→ **[View full documentation in main.py header](rag-custom-engine/main.py)**
+→ **[View full documentation](rag-custom-engine/README.md)**
 
 ---
 
@@ -60,8 +60,18 @@ A collection of **Retrieval-Augmented Generation (RAG)** projects exploring diff
 ```
 RAG/
 ├── README.md                      ← you are here
-├── docs/                          ← Reference PDFs (documentation)
+├── docs/                          ← Reference PDFs + interactive HTML dashboard
+│   ├── documentation.html         ← Self-contained HTML docs dashboard (open in browser)
+│   ├── comprehensive-documentation.pdf
+│   └── executive-summary.pdf
 ├── rag-langchain-chroma/          ← Project 1: LangChain + ChromaDB HNSW hybrid RAG
-├── rag-custom-engine/             ← Project 2: From-scratch HNSW, BM25, hybrid RAG
-└── rag-from-scratch-legacy/       ← Legacy/archived predecessor of rag-custom-engine
+└── rag-custom-engine/             ← Project 2: From-scratch HNSW, BM25, hybrid RAG
 ```
+
+---
+
+## Interactive Documentation
+
+A self-contained HTML dashboard covering both projects — architecture, implementation details, API reference, comparison, and deficiencies — is available at:
+
+**[docs/documentation.html](docs/documentation.html)** — open directly in any browser, no server required.

@@ -1455,9 +1455,22 @@ async function sendQuery() {
                     refreshSessions();
                     updateBadges();
                 } else if (event.type === "error") {
-                    showToast(event.data.message || "Pipeline error", "error");
+                    const msg = event.data.message || "Pipeline error";
+                    // Expected empty-state errors → inline message, not a red popup
+                    if (msg.toLowerCase().includes("no documents ingested") ||
+                        msg.toLowerCase().includes("please upload")) {
+                        // Clean up the pending trace card
+                        if (_pendingTraceId) finalizeTraceCard(_pendingTraceId);
+                        appendEmptyStateMessage(
+                            "No documents uploaded",
+                            "Upload a document using the panel on the left, then ask your question."
+                        );
+                        document.getElementById("pipelineStatusText").textContent = "";
+                    } else {
+                        showToast(msg, "error");
+                        document.getElementById("pipelineStatusText").textContent = "Error";
+                    }
                     showLoading(false);
-                    document.getElementById("pipelineStatusText").textContent = "Error";
                 }
             }
         }
@@ -1549,6 +1562,25 @@ function scrollToBottom() {
     chatArea.scrollTop = chatArea.scrollHeight;
 }
 
+// ─── Inline empty-state notice (replaces error popup for expected empty states) ─
+function appendEmptyStateMessage(title, hint) {
+    const chatArea = document.getElementById("chatArea");
+    // Hide welcome message if visible
+    const welcome = document.getElementById("welcomeMessage");
+    if (welcome) welcome.style.display = "none";
+    const div = document.createElement("div");
+    div.className = "message";
+    div.innerHTML = `
+        <div class="empty-state-message">
+            <span class="empty-state-icon">📭</span>
+            <span class="empty-state-title">${escapeHtml(title)}</span>
+            ${hint ? `<span class="empty-state-hint">${escapeHtml(hint)}</span>` : ""}
+        </div>
+    `;
+    chatArea.appendChild(div);
+    scrollToBottom();
+}
+
 // ═══════════════════════════════════════════════════════════════
 // Sessions
 // ═══════════════════════════════════════════════════════════════
@@ -1635,6 +1667,8 @@ async function selectSession(sessionId) {
                 if (list) list.style.display = "block";
                 if (chev) chev.textContent = "expand_less";
                 if (card) card.classList.add("expanded");
+                // Also restore the most recent trace in the pipeline panel
+                restorePipelineToPanel(lastTraceId);
             }
         }
         updateBadges();
@@ -1723,7 +1757,13 @@ async function archiveSession(sessionId, e) {
             showToast("Session archived to memory", "success");
         } else {
             const err = await res.json().catch(() => ({}));
-            showToast(err.detail || "Archive failed", "error");
+            const detail = err.detail || "";
+            // Expected empty-state → soft warning, not a red error
+            if (res.status === 400 && detail.toLowerCase().includes("no messages")) {
+                showToast("Nothing to archive — this chat has no messages yet.", "warning");
+            } else {
+                showToast(detail || "Archive failed", "error");
+            }
         }
     } catch (e) {
         showToast("Archive failed", "error");
