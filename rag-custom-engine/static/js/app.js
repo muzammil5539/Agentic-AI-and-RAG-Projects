@@ -18,6 +18,10 @@ let _pendingSteps = [];
 let _pendingTraceStartTime = null;
 // Per-trace step counts, keyed by traceId, so older cards keep correct counters
 let _traceStepCounts = {};
+// Per-trace full step data for pipeline panel restoration, keyed by traceId
+let _traceFullData = {};
+// Currently active trace shown in the pipeline panel
+let _activePanelTraceId = null;
 
 // ─────────────────────── Init ──────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
@@ -96,6 +100,11 @@ function switchPipelineTab(tab) {
         archPanel.style.display  = "none";
         tabTrace.classList.add("active");
         tabArch.classList.remove("active");
+        // Chart.js sizes canvases as 0×0 when their container is hidden.
+        // Resize all chart instances now that the panel is visible again.
+        requestAnimationFrame(() => {
+            Object.values(_chartInstances).forEach(c => { try { c.resize(); } catch(e){} });
+        });
     } else {
         tracePanel.style.display = "none";
         archPanel.style.display  = "block";
@@ -440,6 +449,15 @@ function onStepComplete(step, index) {
 
     // Save step data for hover cards
     _stepData[index] = step;
+
+    // Accumulate full step data per trace for pipeline panel restoration
+    if (_pendingTraceId) {
+        if (!_traceFullData[_pendingTraceId]) {
+            _traceFullData[_pendingTraceId] = { steps: [] };
+        }
+        // Overwrite by index so replaying always gets the final state
+        _traceFullData[_pendingTraceId].steps[index] = step;
+    }
 
     // Update timeline row
     const row = document.getElementById(`tl-row-${index}`);
@@ -1192,6 +1210,7 @@ function appendTraceCard(traceId) {
     _pendingSteps = [];
     _pendingTraceStartTime = performance.now();
     _traceStepCounts[traceId] = 0;
+    _traceFullData[traceId] = { steps: [] };
     const chatArea = document.getElementById("chatArea");
     const div = document.createElement("div");
     div.className = "message trace-message";
@@ -1248,6 +1267,7 @@ function finalizeTraceCard(traceId) {
     const icon    = card ? card.querySelector(".trace-toggle-icon") : null;
     const chev    = document.getElementById(`trace-chev-${traceId}`);
     const list    = document.getElementById(`trace-steps-${traceId}`);
+    const btn     = card ? card.querySelector(".trace-toggle-btn") : null;
 
     const stepCount = _traceStepCounts[traceId] || _pendingSteps.length;
 
@@ -1259,6 +1279,13 @@ function finalizeTraceCard(traceId) {
     }
     if (icon)    icon.textContent = "account_tree";
     if (chev)    chev.style.display = "inline";
+    // Insert "↑ view in panel" hint after the counter if not already present
+    if (btn && !btn.querySelector(".trace-view-hint")) {
+        const hint = document.createElement("span");
+        hint.className = "trace-step-counter trace-view-hint";
+        hint.textContent = "↑ view in panel";
+        btn.insertBefore(hint, chev);
+    }
     // Collapse the step list now that the trace is complete; user can re-open
     if (list)    list.style.display = "none";
     if (card)    card.classList.remove("expanded");
@@ -1275,6 +1302,40 @@ function toggleInlineTrace(traceId) {
     list.style.display = open ? "none" : "block";
     if (chev)  chev.textContent = open ? "expand_more" : "expand_less";
     if (card)  card.classList.toggle("expanded", !open);
+    // Restore the detailed pipeline for this trace in the top panel
+    restorePipelineToPanel(traceId);
+}
+
+// ─── Restore the pipeline panel to show a specific trace's detailed steps ───
+function restorePipelineToPanel(traceId) {
+    const data = _traceFullData[traceId];
+    if (!data || !data.steps || data.steps.length === 0) return;
+
+    // Mark this trace as the one displayed in the panel
+    _activePanelTraceId = traceId;
+
+    // Highlight the selected trace card; remove highlight from all others
+    document.querySelectorAll(".trace-card").forEach(el => el.classList.remove("trace-card-active"));
+    const activeCard = document.getElementById(`trace-card-${traceId}`);
+    if (activeCard) activeCard.classList.add("trace-card-active");
+
+    // Ensure the trace tab is visible
+    switchPipelineTab("trace");
+    if (!pipelineVisible) togglePipeline();
+
+    // Reset pipeline bar to pending state and replay all stored steps
+    initPipelineBar();
+
+    const stepNames = Object.keys(STEP_ICONS);
+    const stepIndex = {};
+    stepNames.forEach((name, i) => { stepIndex[name] = i; });
+
+    data.steps.forEach((step, idx) => {
+        if (step) onStepComplete(step, idx);
+    });
+
+    const statusText = document.getElementById("pipelineStatusText");
+    if (statusText) statusText.textContent = "Trace loaded";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1591,6 +1652,17 @@ function appendSavedTraceCard(trace) {
     div.className  = "message trace-message";
     div.id         = `trace-${traceId}`;
 
+    // Store full step data so the pipeline panel can be restored when clicked
+    const stepNames = Object.keys(STEP_ICONS);
+    const stepIndex = {};
+    stepNames.forEach((name, i) => { stepIndex[name] = i; });
+    const orderedSteps = [];
+    steps.forEach(step => {
+        const idx = stepIndex[step.name];
+        if (idx !== undefined) orderedSteps[idx] = step;
+    });
+    _traceFullData[traceId] = { steps: orderedSteps };
+
     const iconMap = { completed: "check_circle", skipped: "do_not_disturb_on", error: "error" };
     const stepRows = steps.map(step => {
         const icon = iconMap[step.status] || "pending";
@@ -1613,6 +1685,7 @@ function appendSavedTraceCard(trace) {
                 <span class="material-icons-round trace-toggle-icon">account_tree</span>
                 <span class="trace-toggle-label" id="trace-label-${traceId}">Pipeline trace</span>
                 <span class="trace-step-counter" id="trace-counter-${traceId}">${steps.length} steps \u00b7 ${totalStr}</span>
+                <span class="trace-step-counter trace-view-hint">↑ view in panel</span>
                 <span class="material-icons-round trace-chevron" id="trace-chev-${traceId}">expand_more</span>
             </button>
             <div class="trace-step-list" id="trace-steps-${traceId}" style="display:none">
@@ -1730,6 +1803,8 @@ function clearChatArea() {
     _chartInstances = {};
     _stepData = {};
     _traceStepCounts = {};
+    _traceFullData = {};
+    _activePanelTraceId = null;
     _pendingTraceId = null;
     _pendingSteps = [];
     hideStepHoverCard();

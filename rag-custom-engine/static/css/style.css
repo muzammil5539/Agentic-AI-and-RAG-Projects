@@ -2054,6 +2054,16 @@ body {
     border-color: #A5B4FC;
 }
 .trace-card.expanded { border-color: var(--accent); }
+.trace-card.trace-card-active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.25);
+}
+.trace-view-hint {
+    background: #EEF2FF !important;
+    color: var(--accent) !important;
+    opacity: 0.75;
+    font-style: italic;
+}
 .trace-toggle-btn {
     display: flex;
     align-items: center;
