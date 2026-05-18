@@ -10,6 +10,8 @@ A collection of **Retrieval-Augmented Generation (RAG)** projects exploring diff
 
 > A production-ready conversational document assistant with **hybrid search** (HNSW vector + BM25), a **dual-layer memory system** (in-chat + cross-chat), and a browser-based chat UI — all served by a single FastAPI process.
 
+![RAG LangChain Chroma UI](rag-langchain-chroma/screenshots/01-page-ui.png)
+
 **Key capabilities:**
 - Upload PDF, DOCX, TXT, CSV, or Markdown files and chat with their content
 - Hybrid retrieval: ChromaDB HNSW index fused with BM25 via `EnsembleRetriever`
@@ -27,6 +29,8 @@ A collection of **Retrieval-Augmented Generation (RAG)** projects exploring diff
 ### 2. RAG Custom Engine
 
 > A complete RAG pipeline built entirely from scratch with **no LangChain and no ChromaDB** — custom HNSW vector store, Okapi BM25, hybrid retrieval (weighted ensemble + RRF), multi-query expansion, Self-RAG adaptive retrieval, contextual compression, and dual-layer memory.
+
+![RAG Custom Engine UI](rag-custom-engine/screenshots/01-app-overview.png)
 
 **Key capabilities:**
 - Custom HNSW vector store and BM25 index (pure Python, no external vector DB)

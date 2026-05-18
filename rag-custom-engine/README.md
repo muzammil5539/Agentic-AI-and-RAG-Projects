@@ -9,6 +9,7 @@ The goal is to be a transparent reference implementation where every algorithm i
 ## Table of Contents
 
 - [Overview](#overview)
+- [Screenshots](#screenshots)
 - [Key Features](#key-features)
 - [Architecture](#architecture)
   - [High-Level Diagram](#high-level-diagram)
@@ -55,7 +56,131 @@ This project replicates — and in several ways extends — what production RAG 
 
 ---
 
-## Key Features
+## Screenshots
+
+### 1 — Application UI Overview
+
+![Application UI Overview](screenshots/01-app-overview.png)
+
+The full interface on first load. Numbered regions:
+
+| Box | Region | Description |
+|---|---|---|
+| **1** | **Chats Panel** (top-left sidebar) | Lists all chat sessions. The **+ New Chat** button creates an isolated session with its own document context. |
+| **2** | **Document Upload** (middle sidebar) | Drag-and-drop zone that accepts PDF, TXT, DOCX, CSV, and Markdown. Each upload triggers chunking, embedding, and dual BM25+HNSW indexing. |
+| **3** | **Memory Panel** (bottom sidebar) | Shows archived cross-session summaries that the model can reference across conversations. |
+| **4** | **Header & Tech Badges** | Displays the active retrieval method badges (**BRUTE FORCE**, **BM25**, **WEIGHTED**) and chat/share/memory counters top-right. |
+| **5** | **Pipeline Trace & Config** | The expandable trace panel that shows live step timing and the config toggles for Multi-Query, Self-RAG, Compression, Vector method, and Merge strategy. |
+| **6** | **Feature Cards Grid** | Shows on idle — six clickable cards summarising each retrieval mode supported by the engine. |
+| **7** | **Query Input Bar** | Main question input. Enter to send; Shift+Enter for newline. |
+
+---
+
+### 2 — Pipeline Configuration Controls
+
+![Pipeline Configuration Controls](screenshots/02-pipeline-config.png)
+
+Close-up of the pipeline configuration bar that appears below the Pipeline Trace tab:
+
+| Box | Control | Description |
+|---|---|---|
+| **1** | **Multi-Query Toggle** | Enables the multi-query expander — the LLM generates 3 query variants and the results are merged via RRF before the main retrieval step. |
+| **2** | **Self-RAG Toggle** | Activates the three Self-RAG gates: retrieval decision, relevance grading, and hallucination check. |
+| **3** | **Compression Toggle** | Enables contextual compression — each retrieved chunk is passed through the LLM to extract only the sentences relevant to the query. |
+| **4** | **Vector Method** | Selects the vector search backend: **Brute Force** (exact cosine scan) or **HNSW** (approximate nearest-neighbour graph). |
+| **5** | **Merge Method** | Controls how vector and BM25 result lists are fused: **Weighted** (score-based ensemble) or **RRF** (Reciprocal Rank Fusion). |
+
+---
+
+### 3 — Document Upload & Ingestion
+
+![Document Upload & Ingestion](screenshots/03-document-upload.png)
+
+The document sidebar after ingesting three files:
+
+| Box | Region | Description |
+|---|---|---|
+| **1** | **Upload Zone** | Dashed drag-and-drop area. Clicking the **browse** link opens a system file picker. Accepts PDF, TXT, DOCX, CSV, MD. |
+| **2** | **Document List with Chunk Counts** | Each ingested file shows its name and the number of chunks created. A green checkmark indicates the file is shared across all sessions. |
+| **3** | **Share Toggle** | The small share icon on each document row toggles the document's *global share* status — shared docs are available as background context in every chat session. |
+
+---
+
+### 4 — Live Pipeline Trace
+
+![Live Pipeline Trace](screenshots/04-pipeline-trace.png)
+
+The Pipeline Trace panel immediately after a query completes:
+
+| Box | Region | Description |
+|---|---|---|
+| **1** | **Pipeline Trace Tab** | The active tab. Clicking it while a query runs shows real-time step updates pushed as Server-Sent Events. |
+| **2** | **Completed in 6.2 s** | Total wall-clock time for the full pipeline run, shown next to the tab bar once the query finishes. |
+| **3** | **Step Chips Timeline** | A horizontal bar of colour-coded step chips, each showing the step name and its duration in milliseconds. Hovering a chip scrolls the detail list below to that step. |
+| **4** | **Step Details List** | Expanded view of each pipeline step: step name (green), output summary, and timing. Gives full per-step observability into what the retrieval chain did. |
+
+---
+
+### 5 — Pipeline Step Breakdown
+
+![Pipeline Step Breakdown](screenshots/05-pipeline-trace-details.png)
+
+Individual step entries in the pipeline trace detail list:
+
+| Box | Step | What it shows |
+|---|---|---|
+| **1** | **Cross-Session Memory** | Searched the cross-chat memory store; found 0 relevant past sessions (38 ms). |
+| **2** | **Multi-Query Expand** | Generated 3 query variants from the user's question; used for broader retrieval (731 ms). |
+| **3** | **Hybrid Search** | Retrieved 10 candidate chunks by fusing BM25 and HNSW vector results (24 ms). |
+| **4** | **Relevance Grading** | LLM scored each chunk for relevance; 7/10 chunks passed the relevance threshold (891 ms). |
+
+---
+
+### 6 — System Architecture Diagram
+
+![System Architecture Diagram](screenshots/06-system-architecture.png)
+
+The built-in architecture diagram (System Architecture tab) shows all pipeline phases:
+
+| Box | Phase | Components |
+|---|---|---|
+| **1** | **Ingestion Phase** | File Upload → Doc Loader → Chunker → Embedder + BM25 Index → Vector Store (HNSW + Brute Force) → Disk Storage |
+| **2** | **Retrieval Phase** | User Query → Self-RAG Gate → Multi-Query → Embed Query → Vector Search + BM25 Search → Hybrid Merge → Relevance Grade + Compression |
+| **3** | **Generation Phase** | Cross-Chat Memory → Context Assembly → LLM (GPT-4o-mini) → Hallucination Check → Answer + Sources |
+| **4** | **Cross-Chat Memory** | The first node in the Generation phase — searches archived summaries and injects relevant context before the LLM call. |
+
+---
+
+### 7 — Grounded RAG Answer with Citations
+
+![Grounded RAG Answer](screenshots/07-rag-answer.png)
+
+A completed query response in the chat window:
+
+| Box | Region | Description |
+|---|---|---|
+| **1** | **LLM Answer Text** | The generated response, grounded exclusively in uploaded documents. Formatted with bold terms and a mathematical formula block. |
+| **2** | **Inline Source Citation** | `[Source: rag_paper.pdf, Chunk: 7]` citations embedded inline — every factual claim traces to a specific chunk. |
+| **3** | **References Section** | A collated list of all source chunks used, with filename, chunk number, and a verbatim snippet from the retrieved text. |
+| **4** | **Chat/Memory Counters** | Top-right header shows `🗨 2` (2 messages in this session), `🔗 0` shares, `🔑 0` cross-session memories retrieved. |
+
+---
+
+### 8 — Cross-Session Memory Panel
+
+![Cross-Session Memory Panel](screenshots/08-cross-session-memory.png)
+
+The sidebar Memory panel showing three archived conversation summaries:
+
+| Box | Region | Description |
+|---|---|---|
+| **1** | **Memory Panel** | The bottom-left sidebar section listing all archived session summaries available for future retrieval. |
+| **2** | **HNSW Algorithm Discussion** | An archived session from 2026-05-17 with 8 messages — the LLM summarised this conversation and stored it as a retrievable memory. |
+| **3** | **More Archived Sessions** | Additional sessions (BM25 vs TF-IDF Comparison, RAG Pipeline Optimisation) are automatically searched on every query to inject relevant past context. |
+| **4** | **Memory Count Badge** | Top-right badge showing `🔑 3` — 3 cross-session memories are currently stored and available for retrieval. |
+
+---
+
 
 | Feature | Description |
 |---|---|
