@@ -12,14 +12,18 @@ import {
   Settings,
   ChevronDown,
   ChevronUp,
+  Trash2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const createSession = useChatStore((s) => s.createSession);
   const apiKey = useChatStore((s) => s.apiKey);
+  const clearAllData = useChatStore((s) => s.clearAllData);
 
   // Auto-open settings panel when there is no API key set
   useEffect(() => {
@@ -108,6 +112,51 @@ export function Sidebar() {
               <ModelSelector />
             </div>
             <ApiKeyInput />
+
+            {/* Danger zone */}
+            <div className="pt-1 border-t border-zinc-800/60">
+              {!showClearConfirm ? (
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs text-red-400/70 hover:text-red-400 hover:bg-red-500/8 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Clear All Data
+                </button>
+              ) : (
+                <div className="space-y-2 py-1">
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">
+                    Removes your API key and <strong className="text-zinc-300">deletes all sessions</strong> from the server. This cannot be undone.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        setClearing(true);
+                        await clearAllData();
+                        setClearing(false);
+                        setShowClearConfirm(false);
+                        setShowSettings(false);
+                      }}
+                      disabled={clearing}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-red-600/80 hover:bg-red-600 disabled:opacity-50 text-white text-xs font-medium transition-colors"
+                    >
+                      {clearing ? (
+                        <span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3 h-3" />
+                      )}
+                      {clearing ? "Clearing…" : "Yes, clear all"}
+                    </button>
+                    <button
+                      onClick={() => setShowClearConfirm(false)}
+                      className="flex-1 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -26,6 +26,7 @@ interface ChatState {
 
   // ── Messages ──────────────────────────────────────────
   messages: ChatMessage[];
+  messagesMap: Record<string, ChatMessage[]>;
   isStreaming: boolean;
   currentSteps: AgentStep[];
   streamingContent: string;
@@ -33,6 +34,7 @@ interface ChatState {
   // ── Actions ───────────────────────────────────────────
   sendMessage: (query: string) => void;
   clearMessages: () => void;
+  clearAllData: () => Promise<void>;
 
   // ── WebSocket ─────────────────────────────────────────
   ws: AgentWebSocket | null;
@@ -94,9 +96,10 @@ export const useChatStore = create<ChatState>()(
       },
 
       selectSession: (id) => {
+        const { messagesMap } = get();
         set({
           activeSessionId: id,
-          messages: [],
+          messages: messagesMap[id] ?? [],
           currentSteps: [],
           streamingContent: "",
         });
@@ -108,6 +111,9 @@ export const useChatStore = create<ChatState>()(
         // Remove from local state immediately for instant UI feedback
         set((s) => ({
           sessions: s.sessions.filter((sess) => sess.id !== id),
+          messagesMap: Object.fromEntries(
+            Object.entries(s.messagesMap).filter(([k]) => k !== id)
+          ),
           ...(s.activeSessionId === id
             ? { activeSessionId: null, messages: [], currentSteps: [], streamingContent: "" }
             : {}),
@@ -123,6 +129,7 @@ export const useChatStore = create<ChatState>()(
 
       // ── Messages ────────────────────────────────────────
       messages: [],
+      messagesMap: {},
       isStreaming: false,
       currentSteps: [],
       streamingContent: "",
@@ -144,6 +151,15 @@ export const useChatStore = create<ChatState>()(
           isStreaming: true,
           currentSteps: [],
           streamingContent: "",
+          // Persist user message immediately so it survives a refresh
+          ...(activeSessionId
+            ? {
+                messagesMap: {
+                  ...s.messagesMap,
+                  [activeSessionId]: [...(s.messagesMap[activeSessionId] ?? []), userMsg],
+                },
+              }
+            : {}),
         }));
 
         ws.send({
@@ -157,6 +173,26 @@ export const useChatStore = create<ChatState>()(
 
       clearMessages: () =>
         set({ messages: [], currentSteps: [], streamingContent: "" }),
+
+      clearAllData: async () => {
+        const { sessions, apiKey, ws } = get();
+        // Best-effort delete every session on the backend
+        await Promise.allSettled(
+          sessions.map((s) => api.sessions.delete(apiKey, s.id))
+        );
+        ws?.disconnect();
+        set({
+          apiKey: "",
+          sessions: [],
+          activeSessionId: null,
+          messages: [],
+          messagesMap: {},
+          currentSteps: [],
+          streamingContent: "",
+          ws: null,
+          wsConnected: false,
+        });
+      },
 
       // ── WebSocket ───────────────────────────────────────
       ws: null,
@@ -232,13 +268,19 @@ export const useChatStore = create<ChatState>()(
                 timestamp: new Date().toISOString(),
                 model: event.model,
               };
+              const finalSessionId = event.session_id || latest.activeSessionId;
+              const newMessages = [...latest.messages, assistantMsg];
 
               set((s) => ({
-                messages: [...s.messages, assistantMsg],
+                messages: newMessages,
                 isStreaming: false,
                 currentSteps: [],
                 streamingContent: "",
-                activeSessionId: event.session_id || s.activeSessionId,
+                activeSessionId: finalSessionId,
+                // Persist complete exchange atomically
+                messagesMap: finalSessionId
+                  ? { ...s.messagesMap, [finalSessionId]: newMessages }
+                  : s.messagesMap,
               }));
 
               get().loadSessions();
@@ -298,6 +340,7 @@ export const useChatStore = create<ChatState>()(
       partialize: (state) => ({
         apiKey: state.apiKey,
         selectedModel: state.selectedModel,
+        messagesMap: state.messagesMap,
       }),
     }
   )

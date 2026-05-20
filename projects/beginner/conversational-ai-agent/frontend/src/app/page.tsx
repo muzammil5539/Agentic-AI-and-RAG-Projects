@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useChatStore } from "@/stores/chatStore";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { ChatContainer } from "@/components/chat/ChatContainer";
+import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { AlertTriangle } from "lucide-react";
 
 export default function Home() {
@@ -11,6 +12,19 @@ export default function Home() {
   const disconnectWs = useChatStore((s) => s.disconnectWs);
   const initHealth = useChatStore((s) => s.initHealth);
   const backendReachable = useChatStore((s) => s.backendReachable);
+  const apiKey = useChatStore((s) => s.apiKey);
+
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show on first visit if no API key
+  useEffect(() => {
+    if (!apiKey) setShowOnboarding(true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-show if key is cleared (logout / clear all data)
+  useEffect(() => {
+    if (!apiKey) setShowOnboarding(true);
+  }, [apiKey]);
 
   useEffect(() => {
     initHealth();
@@ -36,6 +50,11 @@ export default function Home() {
           <ChatContainer />
         </main>
       </div>
+
+      {/* Onboarding overlay */}
+      {showOnboarding && (
+        <OnboardingModal onComplete={() => setShowOnboarding(false)} />
+      )}
     </div>
   );
 }
