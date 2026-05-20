@@ -287,32 +287,29 @@ export const useChatStore = create<ChatState>()(
               break;
             }
 
-            case "error":
+            case "error": {
+              const isAuthError =
+                event.message.toLowerCase().includes("invalid api key") ||
+                event.message.toLowerCase().includes("401");
+              const displayMsg = isAuthError
+                ? "⚠️ Invalid API key — OpenAI rejected it. Open **Settings** (gear icon) and update your key."
+                : `⚠️ ${event.message}`;
               set((s) => ({
                 isStreaming: false,
-                currentSteps: [
-                  ...s.currentSteps,
-                  {
-                    type: "thought",
-                    content: `Error: ${event.message}`,
-                    timestamp: new Date().toISOString(),
-                  },
-                ],
-              }));
-              // Add an error message bubble
-              set((s) => ({
                 messages: [
                   ...s.messages,
                   {
                     id: generateId(),
-                    role: "assistant",
-                    content: `⚠️ ${event.message}`,
-                    steps: s.currentSteps,
+                    role: "assistant" as const,
+                    content: displayMsg,
+                    steps: [],
                     timestamp: new Date().toISOString(),
                   },
                 ],
+                currentSteps: [],
               }));
               break;
+            }
           }
         });
 

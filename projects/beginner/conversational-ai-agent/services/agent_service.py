@@ -6,6 +6,7 @@ import logging
 from collections.abc import AsyncGenerator
 from datetime import datetime
 
+import openai
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from agent.graph import build_agent_graph
@@ -170,6 +171,19 @@ class AgentService:
 
             yield WSDoneEvent(session_id=session_id, model=model)
 
+        except openai.AuthenticationError:
+            logger.warning("Invalid API key — 401 from OpenAI")
+            yield WSErrorEvent(
+                message=(
+                    "Invalid API key — OpenAI rejected it with 401. "
+                    "Please update your key in Settings (the gear icon)."
+                )
+            )
+        except openai.RateLimitError:
+            logger.warning("OpenAI rate limit hit")
+            yield WSErrorEvent(
+                message="OpenAI rate limit reached. Please wait a moment and try again."
+            )
         except Exception as e:
             logger.exception("Stream error")
             yield WSErrorEvent(message=str(e))
