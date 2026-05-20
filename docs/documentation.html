@@ -228,6 +228,7 @@
     <button class="tab-btn active" onclick="switchTab('overview',this)">Overview</button>
     <button class="tab-btn" onclick="switchTab('langchain',this)">RAG LangChain Chroma</button>
     <button class="tab-btn" onclick="switchTab('custom',this)">RAG Custom Engine</button>
+    <button class="tab-btn" onclick="switchTab('agent',this)">Conversational AI Agent</button>
     <button class="tab-btn" onclick="switchTab('compare',this)">Comparison</button>
     <button class="tab-btn" onclick="switchTab('deficiencies',this)">Deficiencies &amp; Roadmap</button>
   </nav>
@@ -272,6 +273,15 @@
           </p>
           <p style="margin-top:8px"><a href="#" onclick="switchTab('custom',null);return false;">→ Full documentation</a></p>
         </div>
+        <div class="card">
+          <h3>🤖 Conversational AI Agent</h3>
+          <p>ReAct-style AI agent with 6 tools, visible thought process, and real-time WebSocket streaming. LangGraph orchestration, Next.js frontend, SQLite persistence.</p>
+          <p>
+            <span class="badge badge-teal">Port 8002</span>
+            <span class="badge badge-purple">LangGraph</span>
+          </p>
+          <p style="margin-top:8px"><a href="#" onclick="switchTab('agent',null);return false;">→ Full documentation</a></p>
+        </div>
       </div>
 
       <h2 id="ov-quickstart">Quick Start</h2>
@@ -295,6 +305,18 @@ pip install -r requirements.txt
 echo "OPENAI_API_KEY=sk-..." > .env
 python main.py
 # → http://localhost:8001</code></pre>
+        </div>
+        <div class="card">
+          <h4>Conversational AI Agent</h4>
+          <pre><code>cd conversational-ai-agent
+pip install -r requirements.txt
+python main.py
+# → Backend at http://localhost:8002
+
+cd frontend
+npm install && npm run dev
+# → Frontend at http://localhost:3000
+# Enter your OpenAI API key in Settings</code></pre>
         </div>
       </div>
 
@@ -775,6 +797,159 @@ BM25_WEIGHT=0.5</code></pre>
           </tbody>
         </table>
       </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════
+         TAB — CONVERSATIONAL AI AGENT
+    ══════════════════════════════════════════════════════════════ -->
+    <section class="tab-panel" id="tab-agent" data-label="Conversational AI Agent">
+
+      <h1>Conversational AI Agent</h1>
+      <p class="subtitle">Project 3 — ReAct-style AI agent with tool calling, visible thought process, and real-time WebSocket streaming.</p>
+
+      <h2 id="agent-arch">Architecture Overview</h2>
+      <div class="info-box">
+        <p><strong>Pattern:</strong> ReAct (Reason + Act) via LangGraph StateGraph</p>
+        <p><strong>Flow:</strong> START → agent_node → should_continue → tool_node → agent_node → ... → END</p>
+        <p><strong>Memory:</strong> SQLite checkpointer for persistent conversation history</p>
+        <p><strong>Auth:</strong> User provides their own OpenAI API key via X-API-Key header; SHA-256 hash used as user_id for session isolation</p>
+      </div>
+
+      <h2 id="agent-stack">Tech Stack</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>Orchestration</td><td>LangGraph</td><td>StateGraph with ReAct loop, conditional edges</td></tr>
+            <tr><td>Backend</td><td>FastAPI + Uvicorn</td><td>REST API + WebSocket streaming</td></tr>
+            <tr><td>Frontend</td><td>Next.js 16 + TypeScript</td><td>Chat UI with Tailwind CSS, Zustand state</td></tr>
+            <tr><td>LLM</td><td>OpenAI (gpt-4o-mini, gpt-4o, gpt-4.1)</td><td>Chat completion with tool binding</td></tr>
+            <tr><td>Memory</td><td>SQLite (langgraph-checkpoint-sqlite)</td><td>Persistent checkpointing</td></tr>
+            <tr><td>Vector DB</td><td>ChromaDB</td><td>Document RAG search tool</td></tr>
+            <tr><td>Validation</td><td>Pydantic v2</td><td>All models, settings, request/response schemas</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="agent-tools">Tools (6)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>calculator</code></td><td>Custom (AST)</td><td>Safe math evaluation — arithmetic, sqrt, log, trig, constants (pi, e)</td></tr>
+            <tr><td><code>weather</code></td><td>Custom (API)</td><td>Open-Meteo geocoding + forecast, WMO weather codes, 3-day outlook</td></tr>
+            <tr><td><code>datetime_tool</code></td><td>Custom</td><td>Current time, timezone convert, date add/diff, list timezones</td></tr>
+            <tr><td><code>web_search</code></td><td>OpenAI native</td><td>Delegates to OpenAI's built-in web search capability</td></tr>
+            <tr><td><code>code_interpreter</code></td><td>OpenAI native</td><td>Delegates to OpenAI's built-in code interpreter</td></tr>
+            <tr><td><code>rag_search</code></td><td>Custom (Chroma)</td><td>Similarity search on uploaded documents in Chroma vector DB</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="agent-api">API Endpoints</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>GET</td><td><code>/api/v1/health</code></td><td>No</td><td>Health check, available models &amp; tools count</td></tr>
+            <tr><td>GET</td><td><code>/api/v1/tools</code></td><td>No</td><td>List all tools with input schemas</td></tr>
+            <tr><td>POST</td><td><code>/api/v1/chat</code></td><td>Yes</td><td>Synchronous chat (non-streaming)</td></tr>
+            <tr><td>WS</td><td><code>/ws/chat</code></td><td>Yes*</td><td>WebSocket streaming — sends thought/tool/token/done events</td></tr>
+            <tr><td>GET</td><td><code>/api/v1/sessions</code></td><td>Yes</td><td>List user's sessions</td></tr>
+            <tr><td>POST</td><td><code>/api/v1/sessions</code></td><td>Yes</td><td>Create new session</td></tr>
+            <tr><td>DELETE</td><td><code>/api/v1/sessions/:id</code></td><td>Yes</td><td>Delete a session</td></tr>
+            <tr><td>POST</td><td><code>/api/v1/documents/upload</code></td><td>Yes</td><td>Upload document for RAG indexing</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="agent-ws">WebSocket Protocol</h2>
+      <div class="info-box">
+        <p><strong>Client → Server:</strong> <code>{"type":"chat","query":"...","session_id":null,"model":"gpt-4o-mini","api_key":"sk-..."}</code></p>
+        <p><strong>Server → Client events:</strong></p>
+        <ul>
+          <li><code>thought</code> — Agent's internal reasoning step</li>
+          <li><code>tool_call</code> — Tool invocation with name + arguments</li>
+          <li><code>tool_result</code> — Tool execution output</li>
+          <li><code>token</code> — Streaming text token</li>
+          <li><code>done</code> — Completion with session_id and model</li>
+          <li><code>error</code> — Error message</li>
+        </ul>
+      </div>
+
+      <h2 id="agent-frontend">Frontend Components</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Component</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>ChatContainer</code></td><td>Message list with auto-scroll, empty state, streaming indicator</td></tr>
+            <tr><td><code>MessageBubble</code></td><td>User (blue) / Assistant (dark) bubbles with markdown rendering</td></tr>
+            <tr><td><code>ThinkingPanel</code></td><td>Collapsible ReAct trace — step icons, color-coded thought/tool/answer</td></tr>
+            <tr><td><code>MessageInput</code></td><td>Auto-resizing textarea, Enter to send, Shift+Enter for newline</td></tr>
+            <tr><td><code>Sidebar</code></td><td>Session list, new chat, settings toggle</td></tr>
+            <tr><td><code>ModelSelector</code></td><td>Dropdown to switch between available OpenAI models</td></tr>
+            <tr><td><code>ApiKeyInput</code></td><td>Secure password input for OpenAI API key, persisted to localStorage</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="agent-structure">Project Structure</h2>
+      <pre><code>conversational-ai-agent/
+├── main.py                    # FastAPI entry point (port 8002)
+├── config.py                  # Pydantic BaseSettings
+├── requirements.txt
+├── agent/                     # LangGraph ReAct agent
+│   ├── graph.py               # StateGraph: agent → tools → agent → END
+│   ├── state.py               # AgentState (messages, steps, iteration_count)
+│   ├── nodes.py               # agent_node, tool_node, should_continue
+│   └── prompts.py             # System prompt with tool descriptions
+├── tools/                     # 6 agent tools
+│   ├── registry.py            # Tool catalog & discovery
+│   ├── calculator.py          # AST-based safe math
+│   ├── weather.py             # Open-Meteo API
+│   ├── datetime_tool.py       # Date/time operations
+│   ├── web_search.py          # OpenAI web search
+│   ├── code_interpreter.py    # OpenAI code interpreter
+│   └── rag_search.py          # Chroma vector search
+├── api/                       # FastAPI routes & Pydantic models
+│   ├── routes/                # health, chat, sessions, tools, documents
+│   ├── models/                # requests, responses, ws_messages
+│   └── dependencies.py        # Auth, DI
+├── services/                  # Business logic
+│   ├── agent_service.py       # Graph invocation & WS streaming
+│   └── session_service.py     # Session CRUD
+├── memory/                    # Persistence layer
+│   ├── checkpointer.py        # AsyncSqliteSaver
+│   └── session_store.py       # JSON session metadata
+├── tests/                     # 32 tests
+└── frontend/                  # Next.js app
+    └── src/
+        ├── components/chat/   # ChatContainer, MessageBubble, ThinkingPanel
+        ├── components/sidebar/# Sidebar, SessionList
+        ├── components/settings/# ModelSelector, ApiKeyInput
+        ├── stores/            # Zustand store with WS event handling
+        └── lib/               # API client, WebSocket class, types</code></pre>
+
+      <h2 id="agent-testing">Testing</h2>
+      <div class="info-box">
+        <p><strong>32 tests</strong> across 3 test files, all passing:</p>
+        <ul>
+          <li><strong>test_tools.py</strong> — 10 calculator + 7 datetime tool tests</li>
+          <li><strong>test_api.py</strong> — health, tools listing, sessions CRUD, auth validation (8 tests)</li>
+          <li><strong>test_agent.py</strong> — should_continue routing, graph compilation, AgentStep schema (7 tests)</li>
+        </ul>
+      </div>
+
+      <h2 id="agent-security">Security Design</h2>
+      <ul>
+        <li>API key <strong>never stored server-side</strong> — forwarded to OpenAI per-request only</li>
+        <li>SHA-256 hash of key used as <code>user_id</code> for session isolation</li>
+        <li>Safe math evaluation via AST parsing — no <code>eval()</code></li>
+        <li>Pydantic validation on all inputs at system boundaries</li>
+        <li>Session access control — users can only access their own sessions</li>
+        <li>MAX_ITERATIONS guard prevents infinite ReAct loops</li>
+      </ul>
 
     </section>
 

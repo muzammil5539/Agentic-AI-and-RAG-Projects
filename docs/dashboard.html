@@ -260,14 +260,14 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div id="section-dashboard" class="section active">
     <div class="stats-grid">
       <div class="stat-card"><div class="label">Total Projects</div><div class="value">25</div><div class="detail">5 phases · 25 categories</div></div>
-      <div class="stat-card"><div class="label">Completed</div><div class="value">2</div><div class="detail">8% overall progress</div></div>
+      <div class="stat-card"><div class="label">Completed</div><div class="value">3</div><div class="detail">12% overall progress</div></div>
       <div class="stat-card"><div class="label">Technologies</div><div class="value">45+</div><div class="detail">Full-stack AI ecosystem</div></div>
       <div class="stat-card"><div class="label">Est. Duration</div><div class="value">~80w</div><div class="detail">Solo developer pace</div></div>
     </div>
 
     <div class="progress-section">
       <h3>Phase Progress</h3>
-      <div class="pb-row"><div class="pb-label"><span>🟢 Phase 1 · Beginner</span><span>2 / 5 (40%)</span></div><div class="pb-track"><div class="pb-fill pb-green" style="width:40%"></div></div></div>
+      <div class="pb-row"><div class="pb-label"><span>🟢 Phase 1 · Beginner</span><span>3 / 5 (60%)</span></div><div class="pb-track"><div class="pb-fill pb-green" style="width:60%"></div></div></div>
       <div class="pb-row"><div class="pb-label"><span>🔵 Phase 2 · Intermediate</span><span>0 / 6 (0%)</span></div><div class="pb-track"><div class="pb-fill pb-blue" style="width:0%"></div></div></div>
       <div class="pb-row"><div class="pb-label"><span>🟠 Phase 3 · Advanced</span><span>0 / 6 (0%)</span></div><div class="pb-track"><div class="pb-fill pb-orange" style="width:0%"></div></div></div>
       <div class="pb-row"><div class="pb-label"><span>🔴 Phase 4 · Enterprise</span><span>0 / 4 (0%)</span></div><div class="pb-track"><div class="pb-fill pb-red" style="width:0%"></div></div></div>
@@ -302,7 +302,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="timeline">
       <div class="timeline-title">📅 Implementation Timeline</div>
       <div class="timeline-track">
-        <div class="timeline-phase"><div class="timeline-phase-title">🟢 Phase 1 · Beginner — Weeks 1–8</div><div class="timeline-phase-detail">Foundation: RAG systems (✅ done), Conversational AI Agents (ReAct), Document Summarization, Prompt Engineering Lab. Core skills: Python, FastAPI, LangChain, OpenAI, basic frontend.</div></div>
+        <div class="timeline-phase"><div class="timeline-phase-title">🟢 Phase 1 · Beginner — Weeks 1–8</div><div class="timeline-phase-detail">Foundation: RAG systems (✅ done), Conversational AI Agents (✅ done), Document Summarization, Prompt Engineering Lab. Core skills: Python, FastAPI, LangChain, OpenAI, basic frontend.</div></div>
         <div class="timeline-phase"><div class="timeline-phase-title">🔵 Phase 2 · Intermediate — Weeks 9–26</div><div class="timeline-phase-detail">Core AI skills: Multi-Agent Research Crew, Code Review Agent, Voice AI, Knowledge Graph RAG, Workflow Automation, Agent Memory System. Introduces LangGraph, Neo4j, WebSockets, Next.js.</div></div>
         <div class="timeline-phase"><div class="timeline-phase-title">🟠 Phase 3 · Advanced — Weeks 27–50</div><div class="timeline-phase-detail">Production systems: Browser Agent, SaaS Platform, Vision AI, Fine-tuning Pipeline, DevOps Agent, Local LLM Platform. Introduces Stripe, Playwright, vLLM, Kubernetes basics.</div></div>
         <div class="timeline-phase"><div class="timeline-phase-title">🔴 Phase 4 · Enterprise — Weeks 51–70</div><div class="timeline-phase-detail">Enterprise architecture: Enterprise RAG, AI Eval Framework, Multi-Agent Orchestrator, Security Agent. Full production engineering: RBAC, CI/CD, monitoring, security.</div></div>
@@ -802,7 +802,7 @@ def redact_pii(text: str) -> str:
 const projects = [
   {id:1,name:"RAG LangChain Chroma",phase:"beginner",status:"done",description:"Production-ready conversational document assistant with hybrid search (HNSW + BM25), dual-layer memory, and browser-based chat UI.",tech:["FastAPI","LangChain","ChromaDB","OpenAI"],stars:4,unlocks:[6]},
   {id:2,name:"RAG Custom Engine",phase:"beginner",status:"done",description:"Complete RAG pipeline from scratch — custom HNSW, BM25, hybrid retrieval, Self-RAG, contextual compression, no external frameworks.",tech:["FastAPI","OpenAI","Pure Python"],stars:5,unlocks:[9]},
-  {id:3,name:"Conversational AI Agent",phase:"beginner",status:"not-started",description:"ReAct pattern agent that reasons, uses tools (search, calculator, weather), and streams responses with visible thought process.",tech:["LangGraph","FastAPI","Next.js","OpenAI"],stars:4,unlocks:[6,7,8,12]},
+  {id:3,name:"Conversational AI Agent",phase:"beginner",status:"done",description:"ReAct pattern agent that reasons, uses tools (search, calculator, weather), and streams responses with visible thought process.",tech:["LangGraph","FastAPI","Next.js","OpenAI"],stars:4,unlocks:[6,7,8,12]},
   {id:4,name:"AI Document Summarizer",phase:"beginner",status:"not-started",description:"Multi-strategy summarization engine — extractive, abstractive, map-reduce, and refine — with controllable output.",tech:["LangChain","FastAPI","Next.js","OpenAI"],stars:3,unlocks:[14]},
   {id:5,name:"Prompt Engineering Lab",phase:"beginner",status:"not-started",description:"Platform to design, test, version-control, A/B test, and evaluate prompts with cost/quality metrics.",tech:["FastAPI","Next.js","Monaco Editor","OpenAI","Ollama"],stars:5,unlocks:[19]},
   {id:6,name:"Multi-Agent Research Crew",phase:"intermediate",status:"not-started",description:"Specialized agents (Researcher, Analyst, Writer, Critic) collaborate to produce comprehensive research reports.",tech:["LangGraph","FastAPI","React Flow","Tavily","Next.js"],stars:5,unlocks:[20]},
