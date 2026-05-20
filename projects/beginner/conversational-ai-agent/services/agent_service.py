@@ -179,6 +179,13 @@ class AgentService:
 _service: AgentService | None = None
 
 
+def init_agent_service() -> AgentService:
+    """Initialize the service singleton. Called once from app lifespan after checkpointer is set."""
+    global _service
+    _service = AgentService()
+    return _service
+
+
 def get_agent_service() -> AgentService:
     global _service
     if _service is None:

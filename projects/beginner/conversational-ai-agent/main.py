@@ -45,17 +45,21 @@ async def lifespan(app: FastAPI):
     os.makedirs(settings.DATA_DIR, exist_ok=True)
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
-    from memory.checkpointer import get_checkpointer
+    from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+    from memory.checkpointer import set_checkpointer
+    from services.agent_service import init_agent_service
 
-    checkpointer = get_checkpointer()
-    app.state.checkpointer = checkpointer
+    async with AsyncSqliteSaver.from_conn_string(settings.SQLITE_DB_PATH) as checkpointer:
+        set_checkpointer(checkpointer)
+        init_agent_service()
+        app.state.checkpointer = checkpointer
 
-    logger.info("SQLite checkpointer ready at %s", settings.SQLITE_DB_PATH)
-    logger.info("Chroma RAG tool targeting %s", settings.CHROMA_URL)
-    logger.info("Available models: %s", settings.AVAILABLE_MODELS)
-    logger.info("Ready at http://localhost:%d", settings.PORT)
+        logger.info("SQLite checkpointer ready at %s", settings.SQLITE_DB_PATH)
+        logger.info("Chroma RAG tool targeting %s", settings.CHROMA_URL)
+        logger.info("Available models: %s", settings.AVAILABLE_MODELS)
+        logger.info("Ready at http://localhost:%d", settings.PORT)
 
-    yield
+        yield
 
     # ── Shutdown ─────────────────────────────────────────
     logger.info("Shutting down.")

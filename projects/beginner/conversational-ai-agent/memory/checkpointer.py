@@ -4,14 +4,19 @@ from __future__ import annotations
 
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
-from config import settings
-
 _checkpointer: AsyncSqliteSaver | None = None
 
 
-def get_checkpointer() -> AsyncSqliteSaver:
-    """Get or create the shared async SQLite checkpointer."""
+def set_checkpointer(checkpointer: AsyncSqliteSaver) -> None:
+    """Set the shared checkpointer (called once from the app lifespan)."""
     global _checkpointer
+    _checkpointer = checkpointer
+
+
+def get_checkpointer() -> AsyncSqliteSaver:
+    """Return the shared checkpointer. Must be set via set_checkpointer() first."""
     if _checkpointer is None:
-        _checkpointer = AsyncSqliteSaver.from_conn_string(settings.SQLITE_DB_PATH)
+        raise RuntimeError(
+            "Checkpointer not initialized — call set_checkpointer() in lifespan first."
+        )
     return _checkpointer
