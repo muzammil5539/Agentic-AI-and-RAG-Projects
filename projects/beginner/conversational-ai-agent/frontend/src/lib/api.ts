@@ -30,6 +30,11 @@ async function request<T>(
     throw new Error(body.detail || `HTTP ${res.status}`);
   }
 
+  // 204 No Content (e.g. DELETE) — no body to parse
+  if (res.status === 204 || res.headers.get("content-length") === "0") {
+    return undefined as T;
+  }
+
   return res.json();
 }
 

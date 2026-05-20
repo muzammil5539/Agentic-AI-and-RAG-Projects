@@ -22,7 +22,44 @@ router = APIRouter(tags=["chat"])
 # ── REST endpoint (synchronous response) ─────────────────────────
 
 
-@router.post("/api/v1/chat", response_model=ChatResponse)
+@router.post(
+    "/api/v1/chat",
+    response_model=ChatResponse,
+    summary="Chat (non-streaming)",
+    description="""
+Send a message to the ReAct agent and receive the **complete response** in one request.
+
+The agent will reason, call tools, and return the final answer along with the full
+ReAct trace (`steps`). For real-time streaming with visible thought process,
+use the WebSocket endpoint at `/ws/chat` instead.
+
+**Request body:**
+```json
+{
+  "query": "What is 25% of 840?",
+  "session_id": "abc123",
+  "model": "gpt-4o-mini"
+}
+```
+
+**Response example:**
+```json
+{
+  "answer": "25% of 840 is 210.",
+  "session_id": "abc123",
+  "model": "gpt-4o-mini",
+  "steps": [
+    {"type": "thought", "content": "I need to calculate 25% of 840."},
+    {"type": "tool_call", "tool_name": "calculator", "tool_args": {"expression": "0.25 * 840"}},
+    {"type": "tool_result", "tool_name": "calculator", "content": "210.0"},
+    {"type": "answer", "content": "25% of 840 is 210."}
+  ]
+}
+```
+
+Requires `X-API-Key` header.
+""",
+)
 async def chat(
     body: ChatRequest,
     api_key: Annotated[str, Depends(get_api_key)],
@@ -48,13 +85,31 @@ async def chat(
 
 @router.websocket("/ws/chat")
 async def websocket_chat(websocket: WebSocket):
-    """Stream agent execution over WebSocket.
+    """WebSocket endpoint for real-time agent streaming.
 
-    Protocol:
-      1. Client connects
-      2. Client sends JSON matching WSChatMessage schema
-      3. Server streams WSOutgoingEvent JSON messages
-      4. Server sends WSDoneEvent when finished
+    Connect with: ws://localhost:8002/ws/chat
+
+    **Client → Server** (send one JSON message per query):
+    ```json
+    {
+      "type": "chat",
+      "query": "What's the weather in Paris?",
+      "session_id": "abc123",
+      "model": "gpt-4o-mini",
+      "api_key": "sk-..."
+    }
+    ```
+
+    **Server → Client** (stream of typed JSON events):
+    - `{"type": "thought", "content": "I need to check the weather..."}` — agent reasoning
+    - `{"type": "tool_call", "tool_name": "weather", "tool_args": {"location": "Paris"}}` — tool invoked
+    - `{"type": "tool_result", "tool_name": "weather", "content": "15°C, partly cloudy"}` — tool output
+    - `{"type": "token", "content": "The "}` — streaming answer token
+    - `{"type": "done", "session_id": "abc123", "model": "gpt-4o-mini"}` — completion
+    - `{"type": "error", "message": "..."}` — error
+
+    The `session_id` can be `null` — the agent creates a new session automatically.
+    Pass the `session_id` from the `done` event in subsequent messages to continue the conversation.
     """
     await websocket.accept()
     logger.info("WebSocket connected")

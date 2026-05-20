@@ -63,11 +63,107 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Conversational AI Agent",
-    description=(
-        "ReAct-style AI agent with tool calling, "
-        "visible thought process, and WebSocket streaming."
-    ),
+    description="""
+## Overview
+
+A **ReAct-style AI agent** powered by LangGraph that reasons step-by-step, calls tools,
+and streams its thought process in real time over WebSocket.
+
+### Authentication
+
+All endpoints that interact with the LLM require an **OpenAI API key** passed in the
+`X-API-Key` header. The key is forwarded to OpenAI per-request and **never stored**.
+A SHA-256 hash of the key is used internally as a `user_id` for session isolation.
+
+```
+X-API-Key: sk-...
+```
+
+### Ports
+
+| Service | Port |
+|---------|------|
+| Backend (this API) | `8002` |
+| Frontend (Next.js) | `3000` |
+| Chroma vector DB | `8000` |
+
+### WebSocket Streaming
+
+Connect to `ws://localhost:8002/ws/chat` for real-time streaming.
+
+**Send one JSON message per query:**
+```json
+{
+  "type": "chat",
+  "query": "What's the weather in Tokyo?",
+  "session_id": null,
+  "model": "gpt-4o-mini",
+  "api_key": "sk-..."
+}
+```
+
+**Receive a stream of typed events:**
+| Event type | Description |
+|-----------|-------------|
+| `thought` | Agent reasoning step |
+| `tool_call` | Tool being invoked (name + args) |
+| `tool_result` | Tool output |
+| `token` | Streamed answer token |
+| `done` | Final event — includes `session_id` and `model` |
+| `error` | Error message |
+
+### Agent Tools
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `calculator` | Custom | Safe AST-based math (arithmetic, sqrt, trig, log) |
+| `weather` | Custom | Open-Meteo weather forecast — no API key needed |
+| `datetime_tool` | Custom | Current time, timezone convert, date arithmetic |
+| `web_search` | OpenAI | Web search via OpenAI built-in |
+| `code_interpreter` | OpenAI | Python code execution via OpenAI built-in |
+| `rag_search` | Custom | Similarity search on uploaded documents (Chroma) |
+""",
     version="1.0.0",
+    openapi_tags=[
+        {
+            "name": "health",
+            "description": "Health check and server status. No authentication required.",
+        },
+        {
+            "name": "chat",
+            "description": (
+                "Send messages to the ReAct agent. "
+                "Use the REST endpoint for a single request/response, "
+                "or the WebSocket endpoint (`/ws/chat`) for real-time streaming with "
+                "visible thought process."
+            ),
+        },
+        {
+            "name": "sessions",
+            "description": (
+                "Manage conversation sessions. Sessions persist chat history "
+                "using the LangGraph SQLite checkpointer. "
+                "Each session is isolated per API key (user). "
+                "Requires `X-API-Key` header."
+            ),
+        },
+        {
+            "name": "tools",
+            "description": (
+                "Inspect available agent tools and their input schemas. "
+                "No authentication required."
+            ),
+        },
+        {
+            "name": "documents",
+            "description": (
+                "Upload documents for RAG (Retrieval-Augmented Generation) search. "
+                "Uploaded files are chunked and indexed into ChromaDB. "
+                "Use the `rag_search` tool to query them. "
+                "Requires `X-API-Key` header."
+            ),
+        },
+    ],
     lifespan=lifespan,
 )
 

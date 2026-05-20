@@ -36,6 +36,8 @@ interface ChatState {
 
   // ── WebSocket ─────────────────────────────────────────
   ws: AgentWebSocket | null;
+  wsConnected: boolean;
+  backendReachable: boolean;
   connectWs: () => void;
   disconnectWs: () => void;
 
@@ -101,18 +103,21 @@ export const useChatStore = create<ChatState>()(
       },
 
       deleteSession: async (id) => {
-        const { apiKey, activeSessionId } = get();
+        const { apiKey } = get();
         if (!apiKey) return;
+        // Remove from local state immediately for instant UI feedback
+        set((s) => ({
+          sessions: s.sessions.filter((sess) => sess.id !== id),
+          ...(s.activeSessionId === id
+            ? { activeSessionId: null, messages: [], currentSteps: [], streamingContent: "" }
+            : {}),
+        }));
+        // Best-effort delete on backend (ignore 404 — session may already be gone)
         try {
           await api.sessions.delete(apiKey, id);
-          set((s) => ({
-            sessions: s.sessions.filter((sess) => sess.id !== id),
-            ...(activeSessionId === id
-              ? { activeSessionId: null, messages: [] }
-              : {}),
-          }));
         } catch (e) {
-          console.error("Failed to delete session:", e);
+          // Silently ignore — local state is already clean
+          console.warn("Session delete backend call failed (already cleaned locally):", e);
         }
       },
 
@@ -126,7 +131,6 @@ export const useChatStore = create<ChatState>()(
         const { ws, apiKey, selectedModel, activeSessionId } = get();
         if (!apiKey || !ws) return;
 
-        // Add user message
         const userMsg: ChatMessage = {
           id: generateId(),
           role: "user",
@@ -142,7 +146,6 @@ export const useChatStore = create<ChatState>()(
           streamingContent: "",
         }));
 
-        // Send via WebSocket
         ws.send({
           type: "chat",
           query,
@@ -157,12 +160,19 @@ export const useChatStore = create<ChatState>()(
 
       // ── WebSocket ───────────────────────────────────────
       ws: null,
+      wsConnected: false,
+      backendReachable: false,
 
       connectWs: () => {
         const existing = get().ws;
         if (existing?.isConnected) return;
 
         const ws = new AgentWebSocket();
+
+        ws.onStatusChange((connected) => {
+          set({ wsConnected: connected });
+        });
+
         ws.connect();
 
         ws.onEvent((event: WSOutgoingEvent) => {
@@ -170,22 +180,18 @@ export const useChatStore = create<ChatState>()(
 
           switch (event.type) {
             case "thought":
-              set({
+              set((s) => ({
                 currentSteps: [
-                  ...state.currentSteps,
-                  {
-                    type: "thought",
-                    content: event.content,
-                    timestamp: event.timestamp,
-                  },
+                  ...s.currentSteps,
+                  { type: "thought", content: event.content, timestamp: event.timestamp },
                 ],
-              });
+              }));
               break;
 
             case "tool_call":
-              set({
+              set((s) => ({
                 currentSteps: [
-                  ...state.currentSteps,
+                  ...s.currentSteps,
                   {
                     type: "tool_call",
                     content: `Calling ${event.tool_name}`,
@@ -194,13 +200,13 @@ export const useChatStore = create<ChatState>()(
                     timestamp: event.timestamp,
                   },
                 ],
-              });
+              }));
               break;
 
             case "tool_result":
-              set({
+              set((s) => ({
                 currentSteps: [
-                  ...state.currentSteps,
+                  ...s.currentSteps,
                   {
                     type: "tool_result",
                     content: event.content,
@@ -208,22 +214,21 @@ export const useChatStore = create<ChatState>()(
                     timestamp: event.timestamp,
                   },
                 ],
-              });
+              }));
               break;
 
             case "token":
-              set({
-                streamingContent: state.streamingContent + event.content,
-              });
+              set((s) => ({ streamingContent: s.streamingContent + event.content }));
               break;
 
             case "done": {
-              // Finalize the assistant message
+              // Use get() to capture the fully-accumulated streamingContent
+              const latest = get();
               const assistantMsg: ChatMessage = {
                 id: generateId(),
                 role: "assistant",
-                content: state.streamingContent,
-                steps: state.currentSteps,
+                content: latest.streamingContent,
+                steps: latest.currentSteps,
                 timestamp: new Date().toISOString(),
                 model: event.model,
               };
@@ -236,23 +241,35 @@ export const useChatStore = create<ChatState>()(
                 activeSessionId: event.session_id || s.activeSessionId,
               }));
 
-              // Refresh sessions list
               get().loadSessions();
               break;
             }
 
             case "error":
-              set({
+              set((s) => ({
                 isStreaming: false,
                 currentSteps: [
-                  ...state.currentSteps,
+                  ...s.currentSteps,
                   {
                     type: "thought",
                     content: `Error: ${event.message}`,
                     timestamp: new Date().toISOString(),
                   },
                 ],
-              });
+              }));
+              // Add an error message bubble
+              set((s) => ({
+                messages: [
+                  ...s.messages,
+                  {
+                    id: generateId(),
+                    role: "assistant",
+                    content: `⚠️ ${event.message}`,
+                    steps: s.currentSteps,
+                    timestamp: new Date().toISOString(),
+                  },
+                ],
+              }));
               break;
           }
         });
@@ -262,16 +279,17 @@ export const useChatStore = create<ChatState>()(
 
       disconnectWs: () => {
         get().ws?.disconnect();
-        set({ ws: null });
+        set({ ws: null, wsConnected: false });
       },
 
       // ── Init ────────────────────────────────────────────
       initHealth: async () => {
         try {
           const health = await api.health();
-          set({ availableModels: health.models });
+          set({ availableModels: health.models, backendReachable: true });
         } catch (e) {
           console.error("Backend unreachable:", e);
+          set({ backendReachable: false });
         }
       },
     }),

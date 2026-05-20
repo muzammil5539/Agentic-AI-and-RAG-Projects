@@ -28,9 +28,29 @@ def _chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> list[s
     return chunks
 
 
-@router.post("/upload", response_model=DocumentUploadResponse)
+@router.post(
+    "/upload",
+    response_model=DocumentUploadResponse,
+    summary="Upload document for RAG",
+    description="""
+Upload a document and index it into ChromaDB so the agent can search it with
+the `rag_search` tool.
+
+**Supported file types:** `.txt`, `.md`, `.pdf` (requires `pypdf`)
+
+The file is chunked (1 000 chars, 200-char overlap) and stored in the specified
+Chroma collection alongside metadata (filename, chunk index, user_id).
+
+**Query parameter:**
+- `collection` (default `agent_docs`) — Chroma collection to index into.
+
+After uploading, tell the agent to search: *"Search my documents for X"*
+
+Requires `X-API-Key` header. Chroma must be running at the configured URL.
+""",
+)
 async def upload_document(
-    file: Annotated[UploadFile, File(description="Document to upload")],
+    file: Annotated[UploadFile, File(description="Text, Markdown, or PDF file to index")],
     api_key: Annotated[str, Depends(get_api_key)],
     user_id: Annotated[str, Depends(get_user_id)],
     collection: str = "agent_docs",
