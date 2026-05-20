@@ -2,9 +2,24 @@
 
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
-from zoneinfo import ZoneInfo, available_timezones
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError, available_timezones
 
 from langchain_core.tools import tool
+
+
+def _get_tz(name: str) -> ZoneInfo | timezone:
+    """Return a ZoneInfo (or UTC fallback). Raises ValueError with a helpful message if unknown."""
+    if not name or name.upper() in ("UTC", "Z"):
+        return timezone.utc
+    try:
+        return ZoneInfo(name)
+    except (ZoneInfoNotFoundError, KeyError):
+        # tzdata not installed or typo — give a useful error
+        raise ValueError(
+            f"Unknown timezone '{name}'. "
+            "Use an IANA name like 'Asia/Karachi', 'America/New_York', 'Europe/London'. "
+            "Call list_timezones to see options."
+        )
 
 
 @tool
@@ -50,7 +65,7 @@ def datetime_tool(
             )
             return "Common timezones:\n" + "\n".join(f"  - {tz}" for tz in common[:50])
 
-        tz = ZoneInfo(timezone_name)
+        tz = _get_tz(timezone_name)
 
         if action == "now":
             now = datetime.now(tz)
@@ -66,7 +81,7 @@ def datetime_tool(
                 dt = datetime.now(tz)
             else:
                 dt = datetime.fromisoformat(date_string).replace(tzinfo=tz)
-            target_tz = ZoneInfo(target_timezone) if target_timezone else ZoneInfo("UTC")
+            target_tz = _get_tz(target_timezone) if target_timezone else timezone.utc
             converted = dt.astimezone(target_tz)
             return (
                 f"{dt.isoformat()} ({timezone_name})\n"
