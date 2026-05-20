@@ -7,7 +7,7 @@ graph TD
     %% Phase 1 - Beginner (Green)
     P1["✅ 1. RAG LangChain"]:::done
     P2["✅ 2. RAG Custom"]:::done
-    P3["3. Conv. AI Agent"]:::beginner
+    P3["🟡 3. Conv. AI Agent"]:::beginner
     P4["4. Doc Summarizer"]:::beginner
     P5["5. Prompt Lab"]:::beginner
 
@@ -126,7 +126,7 @@ gantt
 |---|---------|-------|--------|--------------|-----------|
 | 1 | RAG LangChain Chroma | 🟢 Beginner | ✅ Done | — | RAG, LangChain |
 | 2 | RAG Custom Engine | 🟢 Beginner | ✅ Done | — | RAG internals |
-| 3 | Conversational AI Agent | 🟢 Beginner | 🔴 Not Started | — | ReAct, tools |
+| 3 | Conversational AI Agent | 🟢 Beginner | � In Progress | — | ReAct, tools |
 | 4 | Document Summarizer | 🟢 Beginner | 🔴 Not Started | — | NLP pipelines |
 | 5 | Prompt Engineering Lab | 🟢 Beginner | 🔴 Not Started | — | Prompt design |
 | 6 | Multi-Agent Research Crew | 🔵 Intermediate | 🔴 Not Started | 1, 3 | Multi-agent |
