@@ -32,6 +32,30 @@
 └───────┘   └──────────┘   └────────┘
 ```
 
+## Screenshots
+
+### Frontend (Next.js)
+
+| | |
+|---|---|
+| ![Onboarding modal introducing the agent and its 6 tools](images/01_onboarding_modal.png) | ![API key setup screen with privacy badges](images/02_api_key_setup.png) |
+| **Onboarding Modal** — "Meet Your AI Agent" intro with 6 tool cards | **API Key Setup** — client-side only, never stored server-side |
+| ![Chat welcome screen showing 6 tool suggestion cards](images/03_chat_welcome_screen.png) | ![Thinking panel streaming live tool call and result](images/04_thinking_panel_live.png) |
+| **Chat Welcome Screen** — 6 tool cards with example prompts | **Thinking Panel (Live)** — streams Tool Call → Result in real time |
+| ![Calculator tool result rendered in chat](images/05_calculator_result.png) | ![Weather tool result with 3-day forecast](images/06_weather_tool_result.png) |
+| **Calculator Result** — safe AST math evaluation via custom tool | **Weather Tool Result** — current conditions + 3-day forecast |
+| ![Expanded reasoning panel showing full weather tool trace](images/07_reasoning_panel_expanded.png) | ![Multi-turn conversation across calculator, weather, and knowledge](images/08_multi_turn_chat.png) |
+| **Reasoning Panel Expanded** — full tool call + observation trace | **Multi-turn Chat** — calculator, weather, and knowledge queries |
+| ![Agent recalls previous calculation from chat history](images/09_persistent_memory_recall.png) | |
+| **Persistent Memory** — agent recalls earlier result across turns | |
+
+### Backend (FastAPI + Swagger UI)
+
+| | |
+|---|---|
+| ![Swagger UI showing API title, authentication, ports, and WebSocket streaming docs](images/10_backend_swagger_overview.png) | ![Swagger UI listing all REST endpoint groups: health, chat, sessions, tools, documents](images/11_backend_api_endpoints.png) |
+| **API Overview** — title, auth (`X-API-Key`), ports, WebSocket event reference | **REST Endpoints** — `health`, `chat`, `sessions`, `tools`, and `documents` groups |
+
 ## Features
 
 - **ReAct Agent**: Reasons step-by-step, calls tools, reflects on results
