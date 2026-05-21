@@ -45,8 +45,8 @@ Total                  █░░░░░░░░░  8% (2/25)
 |---|---------|--------|----------|-------------|
 | 1 | [RAG LangChain Chroma](projects/beginner/rag-langchain-chroma/) | ✅ Done | LangChain, ChromaDB | Hybrid RAG with dual-layer memory |
 | 2 | [RAG Custom Engine](projects/beginner/rag-custom-engine/) | ✅ Done | Pure Python | From-scratch HNSW, BM25, Self-RAG |
-| 3 | [Conversational AI Agent](projects/beginner/conversational-ai-agent/) | 🔴 Next | LangGraph, Next.js | ReAct agent with tool calling |
-| 4 | Document Summarizer | 🔴 Planned | LangChain, Next.js | Multi-strategy summarization |
+| 3 | [Conversational AI Agent](projects/beginner/conversational-ai-agent/) | ✅ Done | LangGraph, Next.js | ReAct agent with tool calling |
+| 4 | Document Summarizer | 🔴 Next | LangChain, Next.js | Multi-strategy summarization |
 | 5 | Prompt Engineering Lab | 🔴 Planned | Monaco, Ollama | Prompt testing & A/B platform |
 
 ### 🔵 Phase 2: Intermediate
